@@ -4,10 +4,10 @@
     <form ref = 'el'>
      <table>
         <tr>
-          <td>id: <input type="text" :value = 'props.selectedData?.id'></td>
-          <td>name:<input type="text" :value = 'props.selectedData?.name' > </td>
-          <td>age: <input type="text" :value = 'props.selectedData?.age'></td>
-          <td>gender: <input type="text" :value = 'props.selectedData?.gender'></td>
+          <td>id: <input type="text" name="userId" :value = 'props.selectedData.id'></td>
+          <td>name:<input type="text" name="userName" :value = 'props.selectedData.name' > </td>
+          <td>age: <input type="text" name="userAge" :value = 'props.selectedData.age'></td>
+          <td>gender: <input type="text" name="userGender" :value = 'props.selectedData.gender'></td>
         </tr>
       </table>
     </form>    
@@ -19,41 +19,33 @@
 <script lang="ts">
 import { defineComponent, PropType, ref } from 'vue'
 import {UserData} from '../App.vue';
+type aa = HTMLInputElement | HTMLTextAreaElement;
+const a = <T extends aa>(element: T): any => {
+  return element.value;
+}
 
 export default defineComponent({
   name: 'Content-Popup',
-  emits: ['changeData','update:selectedData'],
+  emits: ['changeData'],
   props:{
     selectedData: {
-      type: Object as PropType<UserData>,
-    },
-    testNumber : {
-      type: Number,
+      type: Object as PropType<UserData>
     }
   },
   setup(props, context) {
-    const el = ref<HTMLElement>();
-    const updateUser = () => {
-      const {selectedData} = props;
-      if (selectedData) {
-        context.emit('update:selectedData' ,{
-          id: 1234,
-          name: 'test',
-          age: 33,
-          gender: 'female',
-        } as UserData);
-         context.emit('changeData');
-         console.log(selectedData,);
-      }
-     
+    const el = ref<HTMLFormElement>();
 
-      // const changeData:UserData = {
-      //   id: 1234,
-      //   name: 'test',
-      //   age: 100,
-      //   gender: 'female',
-      // };
-      // context.emit('changeData', changeData);
+    const updateUser = () => {
+      const elements = el.value?.elements;
+      if (elements ){
+        [...elements].forEach(element => {
+          console.log(element.getAttribute("name"));
+          const v = a(element as aa);
+          console.log(v);
+        });
+      }
+      
+      context.emit('changeData', )
     }
 
     return {

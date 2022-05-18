@@ -4,8 +4,7 @@
   <div>
     <modal-view v-if="state.modal === true " @close-modal="state.modal = false" >
       <Content 
-        v-model:selectedData = "state.selectData"
-        v-model:testNumber = "state.testNumber"
+        :selectedData = "state.selectData"
         @changeData = "onChangeSelectData"
       ></Content>
       
@@ -87,7 +86,6 @@ export default defineComponent({
       selectData: userData, 
       addData: userData,
       selectedIdx: 0,
-      testNumber: 5,
     });
 
 
@@ -179,8 +177,9 @@ export default defineComponent({
     }
 
     const onChangeSelectData = (changeData: UserData) => {
-        console.log(changeData);
-        console.log(state.selectData);
+     console.log("changeData> ", changeData);
+     state.selectData = changeData;
+    //  put();
     }
     
     onMounted(() => {
