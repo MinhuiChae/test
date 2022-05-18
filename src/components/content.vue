@@ -25,7 +25,7 @@ export default defineComponent({
   emits: ['changeData','update:selectedData'],
   props:{
     selectedData: {
-      type: Object as PropType<UserData>
+      type: Object as PropType<UserData>,
     },
     testNumber : {
       type: Number,
@@ -43,7 +43,7 @@ export default defineComponent({
           gender: 'female',
         } as UserData);
          context.emit('changeData');
-         console.log(selectedData);
+         console.log(selectedData,);
       }
      
 
