@@ -3,30 +3,16 @@
 
   <div>
     <modal-view v-if="state.modal === true " @close-modal="state.modal = false" >
-      <Content msg="Hello Vue in CodeSandbox!" />
+      <Content 
+        v-model:selectedData = "state.selectData"
+        v-model:testNumber = "state.testNumber"
+        @changeData = "onChangeSelectData"
+      ></Content>
+      
       <div style="float: right" @click="closeModal">닫기</div>
-      <table>
-        <tr>
-        <td>id: <input v-model="state.selectData.id" readonly></td>
-        <td>name: <input v-model="state.selectData.name"></td>
-        <td>age: <input v-model="state.selectData.age"></td>
-        <td>gender: <input v-model="state.selectData.gender" ></td>
-        <div>
-          <button class="btn btn-primary" @click.stop="updateUser">update</button>
-        </div>
-        </tr>
-      </table>
+     
     </modal-view>
-    <button @click="state.modal = true">open</button>
   </div>
-
-
-
-
-
-
-
-
 
   
   <div class="container">
@@ -51,8 +37,10 @@
     <button class="btn-add" @click.stop="openAddModal">add</button>
   </div>
 
-
+  
 </template>
+
+
 
 <script lang="ts">
 import {reactive, defineComponent, onMounted} from 'vue';
@@ -73,6 +61,8 @@ const userData: UserData = {
   age: 0,
   gender: '',
 };
+
+export {UserData} ;
 
 export default defineComponent({
 
@@ -97,6 +87,7 @@ export default defineComponent({
       selectData: userData, 
       addData: userData,
       selectedIdx: 0,
+      testNumber: 5,
     });
 
 
@@ -112,7 +103,8 @@ export default defineComponent({
           age: state.selectData.age,
           gender: state.selectData.gender
         }).then((res: any) => {
-          state.userDatas = res.data.data as UserData[];          
+          state.userDatas = res.data.data as UserData[];     
+              
           alert(res.data.msg);
           state.modal = false;
         }).catch((res:any) => alert(res.response.data.msg))
@@ -142,6 +134,7 @@ export default defineComponent({
         }).then((res: any) => {
             state.userDatas = res.data.data as UserData[];
             state.modal = false;
+            console.log(state.selectData.name)
             alert(res.data.msg);
         }).catch((res:any) => alert(res.response.data.msg))
       } catch (e) {
@@ -184,6 +177,11 @@ export default defineComponent({
     const closeModal = () => {
       state.modal = false;
     }
+
+    const onChangeSelectData = (changeData: UserData) => {
+        console.log(changeData);
+        console.log(state.selectData);
+    }
     
     onMounted(() => {
       getUser()
@@ -197,7 +195,13 @@ export default defineComponent({
       updateUser,
       deleteUser,
       openAddModal,
+      onChangeSelectData,
     };
+  },
+  methods: {
+    Id() {
+  
+    }
   }
 })
 
