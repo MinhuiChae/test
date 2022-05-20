@@ -1,19 +1,21 @@
 <template>
-
-
   <div>
     <modal-view v-if="state.modal === true " @close-modal="state.modal = false" >
+      <div style="float: right" @click="closeModal">닫기</div>
       <Content 
         :selectedData = "state.selectData"
+        :updateModal = "state.updateModal"
+        :addModal = "state.addModal"
         @changeData = "onChangeSelectData"
       ></Content>
-      
-      <div style="float: right" @click="closeModal">닫기</div>
-     
     </modal-view>
+    <alert-modal v-if="state.alertModal === true" @close-modal="state.alertModal = false">
+    <div style="float: right" @click="state.alertModal = false">닫기</div>
+      <alert-content
+        :alertMsg = "state.alertMsg">
+      </alert-content>
+    </alert-modal>
   </div>
-
-  
   <div class="container">
     <table class="userListTable">
       <thead>
@@ -35,17 +37,15 @@
   <div>
     <button class="btn-add" @click.stop="openAddModal">add</button>
   </div>
-
-  
 </template>
-
-
 
 <script lang="ts">
 import {reactive, defineComponent, onMounted} from 'vue';
 import axios from 'axios';
 import ModalView from "./components/modalView.vue"
 import Content from "./components/content.vue";
+import alertModal from './components/alertModal.vue';
+import alertContent from "./components/alertContent.vue"
 
 interface UserData {
   id: number,
@@ -62,13 +62,14 @@ const userData: UserData = {
 };
 
 export {UserData} ;
-
 export default defineComponent({
 
   name: 'App',
   components: {
     ModalView,
     Content,
+    alertModal,
+    alertContent
   },
   setup() {
     /**
@@ -86,9 +87,11 @@ export default defineComponent({
       selectData: userData, 
       addData: userData,
       selectedIdx: 0,
+      updateModal: false,
+      addModal: false,
+      alertModal: false,
+      alertMsg: ''
     });
-
-
     /**
      * 유저의 정보를 가져온다음 서버에 보내주고 status 코드가 200번이면 성공하였다는 메세지와 함께 업데이트 된 리스트를 뿌려준다
      * 그렇지 않을 경우 해당 status 코드에 맞는 메세지를 alert 창에 뿌려주고 리스트를 보여준다.
@@ -101,11 +104,9 @@ export default defineComponent({
           age: state.selectData.age,
           gender: state.selectData.gender
         }).then((res: any) => {
-          state.userDatas = res.data.data as UserData[];     
-              
-          alert(res.data.msg);
-          state.modal = false;
-        }).catch((res:any) => alert(res.response.data.msg))
+          callUpdateList(res);   
+          alertSuccessMessage(res);
+        }).catch((res:any) => alertFailMessage(res))
       } catch (e) {
         console.log(e);
       }
@@ -115,7 +116,7 @@ export default defineComponent({
      * 동적변화를 하는 userDatas 리스트를 요청된 리스트로 업데이트 한다.
      */
     const getUser = () => axios.get("/api/user").then((res: any) => {
-      state.userDatas = res.data.data as UserData[];
+      callUpdateList(res);
     });   
 
     /**
@@ -130,16 +131,13 @@ export default defineComponent({
           age: state.selectData.age,
           gender: state.selectData.gender
         }).then((res: any) => {
-            state.userDatas = res.data.data as UserData[];
-            state.modal = false;
-            console.log(state.selectData.name)
-            alert(res.data.msg);
-        }).catch((res:any) => alert(res.response.data.msg))
+            callUpdateList(res);
+            alertSuccessMessage(res);
+        }).catch((res:any) => alertFailMessage(res))
       } catch (e) {
         console.log(e);
       }
     }
-   
     /**
      * 삭제 할 유저의 아이디를 가져와서 서버에 넘겨준다. status 코드가 200번이면 유저의 리스트를 업데이트 해주고
      * 그렇지 않으면 해당하는 오류메세지를 뿌려준다
@@ -147,9 +145,9 @@ export default defineComponent({
     const deleteUser = (id: number) => {      
       try {
         axios.delete("/api/user/" + id).then((res: any) => {
-          state.userDatas = res.data.data as UserData[];
-          alert(res.data.msg);
-        }).catch((res:any) => alert(res.response.data.msg))
+          callUpdateList(res);
+          alertSuccessMessage(res);
+        }).catch((res:any) => alertFailMessage(res))
       } catch (e) {
         console.log(e);
       }
@@ -165,11 +163,15 @@ export default defineComponent({
       state.modal = true;
       state.selectedIdx = idx;
       state.selectData = Object.assign({}, state.userDatas[idx]);
+      state.updateModal = true;
+      state.addModal = false;
     }
 
     const openAddModal = () => {
       state.modal = true;
       state.selectData = Object.assign({}, state.addData);
+      state.updateModal = false;
+      state.addModal = true;
     }
 
     const closeModal = () => {
@@ -177,11 +179,30 @@ export default defineComponent({
     }
 
     const onChangeSelectData = (changeData: UserData) => {
-     console.log("changeData> ", changeData);
-     state.selectData = changeData;
-    //  put();
+      console.log("changeData> ", changeData);
+      state.selectData = changeData;
+      if(state.updateModal === true) {
+        updateUser();
+      } else if(state.addModal === true) {
+        addUser();
+      }
     }
-    
+
+    const callUpdateList = (res: any) => {
+      state.userDatas = res.data.data as UserData[];
+    }
+
+    const alertSuccessMessage = (res: any) => {
+      state.alertModal = true; 
+      state.alertMsg = res.data.msg;
+      state.modal = false;
+    }
+
+    const alertFailMessage = (res: any) => {
+      state.alertModal = true; 
+      state.alertMsg = res.response.data.msg;
+    }
+
     onMounted(() => {
       getUser()
     })
@@ -196,16 +217,7 @@ export default defineComponent({
       openAddModal,
       onChangeSelectData,
     };
-  },
-  methods: {
-    Id() {
-  
-    }
   }
 })
 
 </script>
-
-<style lang="scss">
-
-</style>

@@ -1,7 +1,7 @@
 <template>
   <div class="modal">
     <div class="overlay" @click="$emit('close-modal')"></div>
-    <div class="modal-card">
+    <div class="alertModal-card">
       <slot></slot>
     </div>
   </div>
