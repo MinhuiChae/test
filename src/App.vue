@@ -1,30 +1,41 @@
 <template>
+<h1 class = 'text-align-center'>UserList</h1>
+ <div>
+    <button class="btn-add" @click.stop="openAddModal">add</button>
+  </div>
   <div>
-    <modal-view v-if="state.modal === true " @close-modal="state.modal = false" >
-      <div style="float: right" @click="closeModal">닫기</div>
+    <ModalView class="userModal" v-if="state.modal === true" 
+    :closebtn="true" 
+    :overlCloseAction = "false"
+    :useCloseBtn = "true"
+    @closeModal = "closeModal">
       <Content 
         :selectedData = "state.selectData"
         :updateModal = "state.updateModal"
         :addModal = "state.addModal"
         @changeData = "onChangeSelectData"
+        @checkFormList="alertChecked"
       ></Content>
-    </modal-view>
-    <alert-modal v-if="state.alertModal === true" @close-modal="state.alertModal = false">
-    <div style="float: right" @click="state.alertModal = false">닫기</div>
-      <alert-content
+    </ModalView>
+    <ModalView class="alertModal" v-if = "state.alertModal === true" 
+    :closebtn="true" 
+    :overlCloseAction = "false"
+    :useCloseBtn = "true"
+    @closeModal = "closeAlertModal" >
+      <alertContent
         :alertMsg = "state.alertMsg">
-      </alert-content>
-    </alert-modal>
+      </alertContent>
+    </ModalView>
   </div>
-  <div class="container">
-    <table class="userListTable">
+  <div class = "container">
+    <table class = "userListTable">
       <thead>
         <th>Id</th>
         <th>Name</th>
         <th>Age</th>
-        <th>Gender</th>
+        <th>Gender</th>        
       </thead>
-      <tr v-for="(userData, idx) in state.userDatas" :key="idx" id="userDataList">
+      <tr v-for = "(userData, idx) in state.userDatas" :key = "idx" class = "userDataList">
         <td>{{ userData.id }}</td>
         <td>{{ userData.name}}</td>
         <td>{{ userData.age}}</td>
@@ -34,9 +45,6 @@
       </tr>
     </table>
   </div>
-  <div>
-    <button class="btn-add" @click.stop="openAddModal">add</button>
-  </div>
 </template>
 
 <script lang="ts">
@@ -44,34 +52,26 @@ import {reactive, defineComponent, onMounted} from 'vue';
 import axios from 'axios';
 import ModalView from "./components/modalView.vue"
 import Content from "./components/content.vue";
-import alertModal from './components/alertModal.vue';
 import alertContent from "./components/alertContent.vue"
+import { IUserData } from "@/interface";
 
-interface UserData {
-  id: number,
-  name: string,
-  age: number,
-  gender: string,
-}
-
-const userData: UserData = {
-  id: 0,
-  name: '',
-  age: 0,
-  gender: '',
-};
-
-export {UserData} ;
 export default defineComponent({
 
   name: 'App',
   components: {
     ModalView,
     Content,
-    alertModal,
     alertContent
   },
   setup() {
+
+    const userData: IUserData = {
+      id: 0,
+      name: '',
+      age: 0,
+      gender: 'female',
+    };
+
     /**
      * 동적으로 감시를 해주는 변수를 선언한 후 동적으로 처리해주어야 하는 것들을 선언한다.
      * 유저들의 데이터와 함수를 실행할 때 해당하는 유저의 정보를 넣어준다.
@@ -82,7 +82,7 @@ export default defineComponent({
      * selectIdx는 선택된 데이터의 값이 userDatas 배열 중에서 몇 번 째인지를 담는다.
      */
     const state = reactive({
-      userDatas: [] as UserData[],
+      userDatas: [] as IUserData[],
       modal: false,
       selectData: userData, 
       addData: userData,
@@ -107,7 +107,7 @@ export default defineComponent({
           callUpdateList(res);   
           alertSuccessMessage(res);
         }).catch((res:any) => alertFailMessage(res))
-      } catch (e) {
+      } catch (e) {        
         console.log(e);
       }
     };
@@ -178,8 +178,11 @@ export default defineComponent({
       state.modal = false;
     }
 
-    const onChangeSelectData = (changeData: UserData) => {
-      console.log("changeData> ", changeData);
+    const closeAlertModal = () => {
+      state.alertModal = false;
+    }
+
+    const onChangeSelectData = (changeData: IUserData) => {
       state.selectData = changeData;
       if(state.updateModal === true) {
         updateUser();
@@ -189,7 +192,7 @@ export default defineComponent({
     }
 
     const callUpdateList = (res: any) => {
-      state.userDatas = res.data.data as UserData[];
+      state.userDatas = res.data.data as IUserData[];
     }
 
     const alertSuccessMessage = (res: any) => {
@@ -203,6 +206,11 @@ export default defineComponent({
       state.alertMsg = res.response.data.msg;
     }
 
+    const alertChecked = (checkFormList: string[]) => {
+      state.alertModal = true; 
+      state.alertMsg = checkFormList + "를 확인하십시오";
+    }
+
     onMounted(() => {
       getUser()
     })
@@ -212,12 +220,19 @@ export default defineComponent({
       addUser,
       openUpdateModal,
       closeModal,
+      closeAlertModal,
       updateUser,
       deleteUser,
       openAddModal,
       onChangeSelectData,
+      alertChecked
     };
   }
 })
 
 </script>
+<style scoped>
+.text-align-center {
+  text-align: center;
+}
+</style>
