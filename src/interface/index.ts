@@ -5,6 +5,14 @@ interface IUserData {
   gender: string,
 }
 
+interface IUserInform {
+  name: string,
+  value: string | number | undefined,
+  inputType: string,
+  selectOption?: string[]
+}
+
 export {
-  IUserData
+  IUserData,
+  IUserInform
 }

@@ -10,7 +10,7 @@
 import { defineComponent } from 'vue'
 
 export default defineComponent({
-  name: 'Content-Popup',
+  name: 'Alert-Popup',
   props:{
    alertMsg: {
      type: String
@@ -18,10 +18,3 @@ export default defineComponent({
   }
 })
 </script>
-
-<!-- Add "scoped" attribute to limit CSS to this component only -->
-<style scoped>
-.content {
-  width:100% !important;
-}
-</style>

@@ -4,6 +4,27 @@ body {
 div {
   box-sizing: border-box;
 }
+
+button {
+  width:100px;
+  height:35px;
+  border:0px;
+  margin:0px;
+  background-color: #e2e2e2;
+  transition: all 0.5s ease;
+  color:#000;
+  &:hover {
+    background-color: #bbb;
+    color:#fff;
+    cursor: pointer;
+    font-size:1.2em;
+  }
+
+  &:active {
+    background-color: #666;
+  }
+}
+
 .black-bg {
   background-color:rgba(0,0,0,.3); 
   justify-content:center; 
@@ -80,7 +101,7 @@ table th, .userDataList td {
 .userModal
 .modal-card {
   position: relative;
-  max-width: 80%;
+  max-width: 60%;
   margin: auto;
   margin-top: 130px;
   padding: 20px;
@@ -101,4 +122,36 @@ table th, .userDataList td {
   min-height: 100px;
   z-index: 10;
   opacity: 1;
+}
+.closeBtn ,
+.changeInformBtn {
+  cursor: pointer;
+  float: right;
+}
+.inputBox {
+  width:200px;
+  height:15px;
+  font-size:15px;
+  text-align: center;
+}
+.selectBox {
+  width:210px;
+  height:21px;
+  font-size:15px;
+  text-align: center;
+}
+.userInputTable {
+  width: 60%;
+  height: 100px;
+  margin: auto;
+  text-align: center;
+}
+.userListTitle {
+  text-align: center;
+}
+.changeInformBtn {
+  width: 70px;
+  height: 30px;
+  border:1px solid #BDBDBD;
+  background-color: #E1E1E1;
 }

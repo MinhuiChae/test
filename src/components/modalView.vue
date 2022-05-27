@@ -1,9 +1,13 @@
 <template>
   <div class="modal">
-    <div class="overlay" @click="closeModalFun(props.closebtn, props.overlCloseAction)" ></div>
+    <div class="overlay" @click="closeModalFun(props.overlCloseAction)" ></div>
     <div class="modal-card">
-      <div style="float: right" @click="closeModalFun(props.closebtn, props.useCloseBtn)">닫기</div>
+      <div v-show = "props.useCloseBtn" @click="closeModalFun(props.useCloseBtn)" class="closeBtn" >닫기</div>
       <slot></slot>
+      <div v-show="props.isConfirmModal">
+        <button @click="clickDeleteBtn">확인</button>
+        <button @click="closeModalFun(props.useCloseBtn)">취소</button>
+      </div>
     </div>
   </div>
 </template>
@@ -13,22 +17,57 @@ import { defineComponent} from 'vue';
 
 export default defineComponent({
   name: 'Content-Popup',
-  emits: ['closeModal'],
+  emits: ['closeModal', 'confirmAction'],
   props:{
-    closebtn: Boolean,
-    overlCloseAction: Boolean,
-    useCloseBtn: Boolean
+    useCloseAction: {
+      type: Boolean,
+      default: false,
+    },
+    overlCloseAction: {
+      type: Boolean,
+      default: false,
+    },
+    useCloseBtn: {
+      type: Boolean,
+      default: false,
+    },
+    isConfirmModal: {
+      type: Boolean,
+      default: false
+    },
   },
   setup(props, context) {
-    const closeModalFun = (closeBtn:boolean, optionBtn: boolean) => {
-      if(closeBtn && optionBtn) {
+    const closeModalFun = (optionBtn: boolean) => {
+      if (props.useCloseAction && optionBtn) {
         context.emit('closeModal', closeModalFun)
-      } 
+      }
     }
+
+    const clickDeleteBtn = () => {
+      context.emit("confirmAction")
+    }
+
     return {
       props,
-      closeModalFun
+      closeModalFun,
+      clickDeleteBtn
     }
   },
+ 
 })
 </script>
+<style lang="scss" scoped>
+
+.modal {
+  display: flex;
+  width:100%;
+  height:100%;
+  background: transparent;
+  .overlay {
+    display: flex;
+    width:100%;
+    height:100%;
+  }
+
+}
+</style>

@@ -5,8 +5,8 @@
   </div>
   <div>
     <ModalView class="userModal" v-if="state.modal === true" 
-    :closebtn="true" 
-    :overlCloseAction = "false"
+    :useCloseAction="true" 
+    :overlCloseAction = "true"
     :useCloseBtn = "true"
     @closeModal = "closeModal">
       <Content 
@@ -15,13 +15,16 @@
         :addModal = "state.addModal"
         @changeData = "onChangeSelectData"
         @checkFormList="alertChecked"
+        @checkName="checkNameForm"
       ></Content>
     </ModalView>
     <ModalView class="alertModal" v-if = "state.alertModal === true" 
-    :closebtn="true" 
-    :overlCloseAction = "false"
+    :useCloseAction="true"  
+    :overlCloseAction = "true"
     :useCloseBtn = "true"
-    @closeModal = "closeAlertModal" >
+    :isConfirmModal = "state.confirmDelete" 
+    @confirmAction = "deleteConfirmAction"
+    @closeModal = "closeModal">
       <alertContent
         :alertMsg = "state.alertMsg">
       </alertContent>
@@ -41,7 +44,7 @@
         <td>{{ userData.age}}</td>
         <td>{{ userData.gender}}</td>
         <td><button class="btn btn-primary" @click.stop="openUpdateModal(idx)">Update</button></td>
-        <td><button class="btn btn-primary" @click.stop="deleteUser(userData.id )">Delete</button></td>
+        <td><button class="btn btn-primary" @click.stop="openDeleteModal(userData.id)">Delete</button></td>
       </tr>
     </table>
   </div>
@@ -90,7 +93,9 @@ export default defineComponent({
       updateModal: false,
       addModal: false,
       alertModal: false,
-      alertMsg: ''
+      alertMsg: '',
+      confirmDelete: false,
+      userId: 0
     });
     /**
      * 유저의 정보를 가져온다음 서버에 보내주고 status 코드가 200번이면 성공하였다는 메세지와 함께 업데이트 된 리스트를 뿌려준다
@@ -104,7 +109,7 @@ export default defineComponent({
           age: state.selectData.age,
           gender: state.selectData.gender
         }).then((res: any) => {
-          callUpdateList(res);   
+          updateList(res);   
           alertSuccessMessage(res);
         }).catch((res:any) => alertFailMessage(res))
       } catch (e) {        
@@ -116,7 +121,7 @@ export default defineComponent({
      * 동적변화를 하는 userDatas 리스트를 요청된 리스트로 업데이트 한다.
      */
     const getUser = () => axios.get("/api/user").then((res: any) => {
-      callUpdateList(res);
+      updateList(res);
     });   
 
     /**
@@ -131,7 +136,7 @@ export default defineComponent({
           age: state.selectData.age,
           gender: state.selectData.gender
         }).then((res: any) => {
-            callUpdateList(res);
+            updateList(res);
             alertSuccessMessage(res);
         }).catch((res:any) => alertFailMessage(res))
       } catch (e) {
@@ -139,18 +144,38 @@ export default defineComponent({
       }
     }
     /**
-     * 삭제 할 유저의 아이디를 가져와서 서버에 넘겨준다. status 코드가 200번이면 유저의 리스트를 업데이트 해주고
-     * 그렇지 않으면 해당하는 오류메세지를 뿌려준다
+     * 삭제여부를 묻는 모달창을 띄워주고
+     * 아이디값을 받아와서 state.userId에 저장한다.
      */
-    const deleteUser = (id: number) => {      
+    const openDeleteModal = (id: number) => { 
+      state.userId = id;
+      state.alertModal = true; 
+      state.alertMsg = "정말 삭제하시겠습니까?";
+      state.confirmDelete = true;
+    }
+
+    /**
+     * 삭제여부를 묻는 모달창에서 확인버튼을 누르면 해당 모달창은 닫고 삭제행위를 시작한다. 
+     * delete 할 유저의 정보는 confirmDeleteAction 에서 저장한 state.userId로 한다
+     * 해당 id 를 서버에 넘긴 후 status code가 200번이면 delete를 한 후 업데이트 된 리스트를 뿌려준다. 
+     * 그 후 성공했다는 메세지를 뿌려주고, 만약 status code가 200번이 아니면 그에 맞는 fail 메세지를 뿌려준다.
+     */
+
+    // 외부에서
+    const deleteConfirmAction = () => {
+      closeModal();
+      deleteUser();
+    }
+  
+    const deleteUser = () => {
       try {
-        axios.delete("/api/user/" + id).then((res: any) => {
-          callUpdateList(res);
-          alertSuccessMessage(res);
+        axios.delete("/api/user/" + state.userId).then((res: any) => {
+        updateList(res);
+        alertSuccessMessage(res);
         }).catch((res:any) => alertFailMessage(res))
-      } catch (e) {
-        console.log(e);
-      }
+        } catch (e) {
+          console.log(e);
+      }  
     }
 
     /**
@@ -176,10 +201,8 @@ export default defineComponent({
 
     const closeModal = () => {
       state.modal = false;
-    }
-
-    const closeAlertModal = () => {
       state.alertModal = false;
+      state.confirmDelete = false;
     }
 
     const onChangeSelectData = (changeData: IUserData) => {
@@ -191,7 +214,7 @@ export default defineComponent({
       }
     }
 
-    const callUpdateList = (res: any) => {
+    const updateList = (res: any) => {
       state.userDatas = res.data.data as IUserData[];
     }
 
@@ -211,6 +234,19 @@ export default defineComponent({
       state.alertMsg = checkFormList + "를 확인하십시오";
     }
 
+    const checkNameForm = (checkName: boolean) => {
+      if(checkName) {
+        state.alertModal = true; 
+        state.alertMsg = "형식에 맞지않는 이름입니다.";
+      }
+    }
+    const stateConfirmDelete = (): boolean => {
+      state.confirmDelete = true;
+      return state.confirmDelete
+    }
+
+    
+
     onMounted(() => {
       getUser()
     })
@@ -220,12 +256,14 @@ export default defineComponent({
       addUser,
       openUpdateModal,
       closeModal,
-      closeAlertModal,
       updateUser,
-      deleteUser,
+      openDeleteModal,
       openAddModal,
       onChangeSelectData,
-      alertChecked
+      alertChecked,
+      checkNameForm,
+      stateConfirmDelete,
+      deleteConfirmAction,
     };
   }
 })
