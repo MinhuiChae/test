@@ -5,7 +5,7 @@
       <ul>
         <li v-for ="input in inputList" :key = "input.name">
           <span class = 'label'>{{ input.name }}  </span>
-          <input :type = "input.inputType" :name="input.name" :value="input.value" v-if="input.inputType !== 'select'" class="inputBox"> 
+          <input :type = "input.inputType" :name="input.name" :value="input.value" v-if="input.inputType !== 'select'" class="inputBox" :readonly="input.name === 'id' && getButtonName === 'update'"> 
           <select :name="input.name" :value="input.value" v-if="input.inputType === 'select'" class="selectBox">
             <option v-for="selectOption in input.selectOption" :key="selectOption"> {{ selectOption }} </option>
           </select>
@@ -26,7 +26,6 @@
     <div> 
       <button class="changeInformBtn" @click.stop="changeUser" > {{ getButtonName }} </button>
     </div>
-    
   </div>
  
 </template>

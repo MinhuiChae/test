@@ -111,7 +111,7 @@ export default defineComponent({
         }).then((res: any) => {
           updateList(res);   
           alertSuccessMessage(res);
-        }).catch((res:any) => alertFailMessage(res))
+        }).catch((res:any) => alertFailMessage(res));
       } catch (e) {        
         console.log(e);
       }
@@ -240,13 +240,7 @@ export default defineComponent({
         state.alertMsg = "형식에 맞지않는 이름입니다.";
       }
     }
-    const stateConfirmDelete = (): boolean => {
-      state.confirmDelete = true;
-      return state.confirmDelete
-    }
-
-    
-
+  
     onMounted(() => {
       getUser()
     })
@@ -262,7 +256,6 @@ export default defineComponent({
       onChangeSelectData,
       alertChecked,
       checkNameForm,
-      stateConfirmDelete,
       deleteConfirmAction,
     };
   }
