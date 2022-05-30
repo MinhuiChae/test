@@ -133,7 +133,6 @@ export default defineComponent({
     const getButtonName = computed((): string => props.updateModal === true ? 'update' : props.addModal === true ? 'add' : '');
     const getTitle = computed((): string => props.updateModal === true ? 'UserUpdate' : props.addModal === true ? 'UserAdd' : '');
     
-
     return {
       props,
       changeUser,
@@ -152,9 +151,6 @@ export default defineComponent({
     flex-direction: column;
     height:100%;
 
-    button {
-      
-    }
   }
   ul, li {
     text-decoration: none;
