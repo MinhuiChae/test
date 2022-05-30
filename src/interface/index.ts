@@ -12,7 +12,15 @@ interface IUserInform {
   selectOption?: string[]
 }
 
+
+enum ESortType {
+  "Id" = "id",
+  "Name" = "name",
+  "Age" = "age",
+}
+
 export {
   IUserData,
-  IUserInform
+  IUserInform,
+  ESortType
 }

@@ -24,7 +24,7 @@
       </table> -->
     </form>  
     <div> 
-      <button class="changeInformBtn" @click.stop="changeUser" > {{ getButtonName }} </button>
+      <button class="changeInformBtn" @click.stop="changeUserInform" > {{ getButtonName }} </button>
     </div>
   </div>
  
@@ -82,7 +82,7 @@ export default defineComponent({
       }
     ]
     
-    const changeUser = () => {
+    const changeUserInform = () => {
       const elements = el.value?.elements;
       if (elements) {
         [...elements].forEach(element => {
@@ -92,7 +92,7 @@ export default defineComponent({
             value = parseInt(value as string);
           }
           if (key) {
-            checkForm(key, value);
+            isValidInform(key, value);
           }
         });
       }
@@ -114,7 +114,7 @@ export default defineComponent({
       return checkName;
     }
 
-    const checkForm = (key: string, value: any) => {
+    const isValidInform = (key: string, value: any) => {
       if (!value) {
         checkFormList.push(key);
       } else {
@@ -135,7 +135,7 @@ export default defineComponent({
     
     return {
       props,
-      changeUser,
+      changeUserInform,
       el,
       getButtonName,
       inputList,

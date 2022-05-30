@@ -1,8 +1,5 @@
 <template>
-<h1 class = 'text-align-center'>UserList</h1>
- <div>
-    <button class="btn-add" @click.stop="openAddModal">add</button>
-  </div>
+  <h1 class = 'text-align-center'>UserList</h1>
   <div>
     <ModalView class="userModal" v-if="state.modal === true" 
     :useCloseAction="true" 
@@ -14,7 +11,7 @@
         :updateModal = "state.updateModal"
         :addModal = "state.addModal"
         @changeData = "onChangeSelectData"
-        @checkFormList="alertChecked"
+        @checkFormList="alertCheckMessage"
         @checkName="checkNameForm"
       ></Content>
     </ModalView>
@@ -24,13 +21,27 @@
     :useCloseBtn = "true"
     :isConfirmModal = "state.confirmDelete" 
     @confirmAction = "deleteConfirmAction"
-    @closeModal = "closeModal">
+    @closeModal = "closeAlertModal">
       <alertContent
         :alertMsg = "state.alertMsg">
       </alertContent>
     </ModalView>
   </div>
+
+  <div>
+    <button class="btn-add" @click.stop="openAddModal">add</button>
+  </div>
+ 
   <div class = "container">
+    <div>
+      <button @click="sort('id')">sortById</button>
+    </div>
+    <div>
+      <button @click="sort('name')">sortByName</button>
+    </div>
+    <div>
+      <button @click="sort('age')">sortByAge</button>
+    </div>
     <table class = "userListTable">
       <thead>
         <th>Id</th>
@@ -40,9 +51,9 @@
       </thead>
       <tr v-for = "(userData, idx) in state.userDatas" :key = "idx" class = "userDataList">
         <td>{{ userData.id }}</td>
-        <td>{{ userData.name}}</td>
-        <td>{{ userData.age}}</td>
-        <td>{{ userData.gender}}</td>
+        <td>{{ userData.name }}</td>
+        <td>{{ userData.age }}</td>
+        <td>{{ userData.gender }}</td>
         <td><button class="btn btn-primary" @click.stop="openUpdateModal(idx)">Update</button></td>
         <td><button class="btn btn-primary" @click.stop="openDeleteModal(userData.id)">Delete</button></td>
       </tr>
@@ -51,12 +62,14 @@
 </template>
 
 <script lang="ts">
+
 import {reactive, defineComponent, onMounted} from 'vue';
 import axios from 'axios';
 import ModalView from "./components/modalView.vue"
 import Content from "./components/content.vue";
 import alertContent from "./components/alertContent.vue"
-import { IUserData } from "@/interface";
+import { IUserData, ESortType } from "@/interface";
+
 
 export default defineComponent({
 
@@ -95,7 +108,11 @@ export default defineComponent({
       alertModal: false,
       alertMsg: '',
       confirmDelete: false,
-      userId: 0
+      userId: 0,
+      sortById: false,
+      sortByName: false,
+      sortByAge: false,
+      sortType: '' as ESortType,
     });
     /**
      * 유저의 정보를 가져온다음 서버에 보내주고 status 코드가 200번이면 성공하였다는 메세지와 함께 업데이트 된 리스트를 뿌려준다
@@ -170,11 +187,11 @@ export default defineComponent({
     const deleteUser = () => {
       try {
         axios.delete("/api/user/" + state.userId).then((res: any) => {
-        updateList(res);
-        alertSuccessMessage(res);
+          updateList(res);
+          alertSuccessMessage(res);
         }).catch((res:any) => alertFailMessage(res))
-        } catch (e) {
-          console.log(e);
+      } catch (e) {
+        console.log(e);
       }  
     }
 
@@ -201,6 +218,9 @@ export default defineComponent({
 
     const closeModal = () => {
       state.modal = false;
+    }
+
+    const closeAlertModal = () => {
       state.alertModal = false;
       state.confirmDelete = false;
     }
@@ -216,6 +236,7 @@ export default defineComponent({
 
     const updateList = (res: any) => {
       state.userDatas = res.data.data as IUserData[];
+      if (state.sortType) doSort();
     }
 
     const alertSuccessMessage = (res: any) => {
@@ -229,7 +250,7 @@ export default defineComponent({
       state.alertMsg = res.response.data.msg;
     }
 
-    const alertChecked = (checkFormList: string[]) => {
+    const alertCheckMessage = (checkFormList: string[]) => {
       state.alertModal = true; 
       state.alertMsg = checkFormList + "를 확인하십시오";
     }
@@ -240,7 +261,51 @@ export default defineComponent({
         state.alertMsg = "형식에 맞지않는 이름입니다.";
       }
     }
-  
+
+    const sort = (sortType: string) => {
+      state.sortType = sortType as ESortType;
+      doSort();
+    }
+
+    const doSort = () => {
+      switch(state.sortType) {
+        case ESortType.Id:
+          sortByUserId(state.userDatas);
+          break;
+        case ESortType.Name:
+          sortByUserName(state.userDatas);
+          break;
+        case ESortType.Age:
+          sortByUserAge(state.userDatas);
+          break;
+      }
+    }
+
+    const sortByUserId = (userDatas: IUserData[]) => {
+      userDatas.sort((a: IUserData, b: IUserData) => {
+        return a.id - b.id;
+      });
+
+      return userDatas;
+    }
+
+    const sortByUserName = (userDatas: IUserData[]) => {
+      userDatas.sort((a: IUserData, b: IUserData): number => {
+        if(a.name > b.name) return 1;
+        if(a.name < b.name) return -1;
+        else return 0;
+      });
+
+      return userDatas;
+    }
+
+    const sortByUserAge = (userDatas: IUserData[]) => {
+      userDatas.sort((a: IUserData, b: IUserData) => {
+        return a.age - b.age;
+      });
+      return userDatas;
+    }
+
     onMounted(() => {
       getUser()
     })
@@ -250,13 +315,15 @@ export default defineComponent({
       addUser,
       openUpdateModal,
       closeModal,
+      closeAlertModal,
       updateUser,
       openDeleteModal,
       openAddModal,
       onChangeSelectData,
-      alertChecked,
+      alertCheckMessage,
       checkNameForm,
       deleteConfirmAction,
+      sort,
     };
   }
 })
