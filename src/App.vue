@@ -33,23 +33,14 @@
   </div>
  
   <div class = "container">
-    <div>
-      <button @click="sort('id')">sortById</button>
-    </div>
-    <div>
-      <button @click="sort('name')">sortByName</button>
-    </div>
-    <div>
-      <button @click="sort('age')">sortByAge</button>
-    </div>
     <table class = "userListTable">
       <thead>
-        <th>Id</th>
-        <th>Name</th>
-        <th>Age</th>
+        <th @click="sort('id')">Id</th>
+        <th @click="sort('name')">Name</th>
+        <th @click="sort('age')">Age</th>
         <th>Gender</th>        
       </thead>
-      <tr v-for = "(userData, idx) in state.userDatas" :key = "idx" class = "userDataList">
+      <tr v-for = "(userData, idx) in paginatedData()" :key = "idx" class = "userDataList">
         <td>{{ userData.id }}</td>
         <td>{{ userData.name }}</td>
         <td>{{ userData.age }}</td>
@@ -59,6 +50,17 @@
       </tr>
     </table>
   </div>
+
+  <div class="btn-cover">
+      <button :disabled="state.pageNum === 0" @click="prevPage" class="page-btn">
+        이전
+      </button>
+      <span class="page-count">{{ state.pageNum + 1 }} / {{ pageCount() }} 페이지</span>
+      <button :disabled="state.pageNum >= pageCount() - 1" @click="nextPage" class="page-btn">
+        다음
+      </button>
+    </div>
+
 </template>
 
 <script lang="ts">
@@ -109,10 +111,9 @@ export default defineComponent({
       alertMsg: '',
       confirmDelete: false,
       userId: 0,
-      sortById: false,
-      sortByName: false,
-      sortByAge: false,
       sortType: '' as ESortType,
+      pageNum: 0,
+      pageSize: 3
     });
     /**
      * 유저의 정보를 가져온다음 서버에 보내주고 status 코드가 200번이면 성공하였다는 메세지와 함께 업데이트 된 리스트를 뿌려준다
@@ -303,7 +304,32 @@ export default defineComponent({
       userDatas.sort((a: IUserData, b: IUserData) => {
         return a.age - b.age;
       });
+      
       return userDatas;
+    }
+
+    const nextPage = () => {
+      state.pageNum += 1;
+    }
+
+    const prevPage = () => {
+      state.pageNum -= 1;
+    }
+
+    const pageCount = () => {
+      let listLeng = state.userDatas.length,
+          listSize = state.pageSize,
+          page = Math.floor(listLeng / listSize);
+
+      if(listLeng % listSize > 0) page += 1;
+
+      return page;
+    }
+
+    const paginatedData = (): IUserData[] => {
+      const start = state.pageNum * state.pageSize,
+            end = start + state.pageSize;
+      return state.userDatas.slice(start, end);
     }
 
     onMounted(() => {
@@ -324,6 +350,10 @@ export default defineComponent({
       checkNameForm,
       deleteConfirmAction,
       sort,
+      nextPage,
+      prevPage,
+      pageCount,
+      paginatedData
     };
   }
 })
@@ -332,5 +362,17 @@ export default defineComponent({
 <style scoped>
 .text-align-center {
   text-align: center;
+}
+.btn-cover {
+  margin-top: 1.5rem;
+  text-align: center;
+}
+.btn-cover .page-btn {
+  width: 5rem;
+  height: 2rem;
+  letter-spacing: 0.5px;
+}
+.btn-cover .page-count {
+  padding: 0 1rem;
 }
 </style>

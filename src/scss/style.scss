@@ -58,6 +58,7 @@ table tr {
 }
 table th, .userDataList td {
   border: 1px solid #E1E1E1;
+  cursor: pointer;
 }
 .userDataList:hover {
   background: lightgray;
