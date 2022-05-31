@@ -45,7 +45,7 @@
         <td>{{ userData.name }}</td>
         <td>{{ userData.age }}</td>
         <td>{{ userData.gender }}</td>
-        <td><button class="btn btn-primary" @click.stop="openUpdateModal(idx)">Update</button></td>
+        <td><button class="btn btn-primary" @click.stop="openUpdateModal(userData.id)">Update</button></td>
         <td><button class="btn btn-primary" @click.stop="openDeleteModal(userData.id)">Delete</button></td>
       </tr>
     </table>
@@ -199,13 +199,12 @@ export default defineComponent({
     /**
      * 업데이트 버튼을 클릭하면 열리는 모달
      * updateModal 이 true 일 때만 열리게 구현해야 하므로 여기서는 state.updateModal 을 true로 정해준다
-     * 유저의 인덱스를 변수로 받아 state.selectIdx에 넣어주어 동적이게 만든다.
-     * state.selectData 변수에 유저 리스트 중 idx번째 유저의 정보를 복사한다.
+     * 유저의 아이디를 받아 UserDatas 에서 해당 아이디의 정보를 가져와서 state.selectData에 넣어준다.
      */
-    const openUpdateModal = (idx: number) => {
+    const openUpdateModal = (id: number) => {
+      const selectData = state.userDatas.find((key: IUserData) => key.id === id);
+      if(selectData) state.selectData = selectData;
       state.modal = true;
-      state.selectedIdx = idx;
-      state.selectData = Object.assign({}, state.userDatas[idx]);
       state.updateModal = true;
       state.addModal = false;
     }
@@ -316,7 +315,7 @@ export default defineComponent({
       state.pageNum -= 1;
     }
 
-    const pageCount = () => {
+    const pageCount = (): number => {
       let listLeng = state.userDatas.length,
           listSize = state.pageSize,
           page = Math.floor(listLeng / listSize);
