@@ -35,9 +35,9 @@
   <div class = "container">
     <table class = "userListTable">
       <thead>
-        <th @click="sort('id')">Id</th>
-        <th @click="sort('name')">Name</th>
-        <th @click="sort('age')">Age</th>
+        <th @click="sort('id', state.sortBy)">Id</th>
+        <th @click="sort('name', state.sortBy)">Name</th>
+        <th @click="sort('age', state.sortBy)">Age</th>
         <th>Gender</th>        
       </thead>
       <tr v-for = "(userData) in getPaginatedData(state.pageNum)" :key = "userData.id" class = "userDataList">
@@ -52,11 +52,11 @@
   </div>
 
   <div class="btn-cover">
-    <button @click="onChangeMinusPageNum" :class="state.buttonColor">
+    <button @click="onChangePageNum(-1)" :class="{'disabled': !canPrevPage}">
       이전
     </button>
-    <span class="page-count">{{ state.pageNum + 1 }} / {{ getPagingCount()}} 페이지</span>
-    <button @click="onChangePlusPageNum " :class="state.buttonColor">
+    <span class="page-count">{{ state.pageNum }} / {{ getPagingTotalPageCount()}} 페이지</span>
+    <button @click="onChangePageNum(+1) " :class="{'disabled': !canNextPage}">
       다음
     </button>
   </div>
@@ -64,16 +64,7 @@
 
 <script lang="ts">
 
-/**
- * view에서 paging 직접호출 하지 X
- * button disabled 사용하지 말고 class 로 처리하여 버튼 동작안되는 css로 적용하여 표시
- * 컬럼 눌렀을때 sorting 되게 하기.
- * 처음 sorting은 1: asc , 2: desc , 3: 처음 , 4:asc , 5: desc , 6: 처음 ....... 로 동작
- * sorting시 page는 현재 보고 있는 페이지여야 한다.
- * 오류 처리.
- */
-
-import {reactive, defineComponent, onMounted} from 'vue';
+import {reactive, defineComponent, onMounted, computed} from 'vue';
 import axios from 'axios';
 import ModalView from "./components/modalView.vue"
 import Content from "./components/content.vue";
@@ -122,19 +113,27 @@ export default defineComponent({
       confirmDelete: false,
       userId: 0,
       sortType: '' as ESortType,
+      sortBy: '',
       pageNum: 0,
       pageSize: 2,
-      buttonColor: ''
+      dir:'asc',
+      sortCnt: 0
     });
 
     const paging = new Paging(state.pageSize);
 
     const getPaginatedData = (num: number) => {
+      if(paging.paginatedData(num).length === 0) {
+        state.pageNum --;
+      }
      return paging.paginatedData(num);
     }
 
-    const getPagingCount = () => {
-      return paging.pageCount();
+    const canPrevPage = computed(() => paging.isActivePrevButton(state.pageNum));
+    const canNextPage = computed(() => paging.isActiveNextButton(state.pageNum));
+
+    const getPagingTotalPageCount = () => {
+      return paging.totalPage;
     }
 
 
@@ -163,7 +162,8 @@ export default defineComponent({
      */
     const getUser = () => axios.get("/api/user").then((res: any) => {
       updateList(res);
-      onChangePageNum()
+      state.pageNum = 1;
+      // onChangePageNum()
     }); 
 
     /**
@@ -287,8 +287,17 @@ export default defineComponent({
       }
     }
 
-    const sort = (sortType: string) => {
+    const sort = (sortType: string, sortBy: string) => {
+      state.sortCnt++;
       state.sortType = sortType as ESortType;
+      console.log(state.sortCnt)
+      if(state.sortCnt === 1) {
+        console.log(1)
+      }
+      state.sortBy = sortBy;
+
+       console.log(sortBy)
+
       doSort();
     }
 
@@ -332,24 +341,15 @@ export default defineComponent({
       return userDatas;
     }
 
-    const onChangePlusPageNum = () => {
-      console.log(state.buttonColor)
-      if(paging.isActiveNextButton(state.pageNum)) {
-        state.pageNum++
+    
+
+    const onChangePageNum = (num: number) => {
+      const changePageNum = state.pageNum + num;
+      if( paging.isInvalidatePageNum(changePageNum) === false) {
+        state.pageNum = changePageNum;        
       } 
     }
 
-    const onChangeMinusPageNum = () => {
-      if(paging.isActivePrevButton(state.pageNum)) {
-        state.pageNum--
-      }
-    }
-
-    const onChangePageNum = () => {
-      onChangePlusPageNum();
-      onChangeMinusPageNum();
-    }
-    
     onMounted(() => {
       getUser()
     })
@@ -369,16 +369,17 @@ export default defineComponent({
       deleteConfirmAction,
       sort,
       paging,
-      onChangePlusPageNum,
-      onChangeMinusPageNum,
       getPaginatedData,
-      getPagingCount
+      getPagingTotalPageCount,
+      onChangePageNum,
+      canPrevPage,
+      canNextPage,
     };
   }
 })
 
 </script>
-<style scoped>
+<style lang="scss">
 .text-align-center {
   text-align: center;
 }
@@ -394,4 +395,11 @@ export default defineComponent({
 .btn-cover .page-count {
   padding: 0 1rem;
 }
+
+
+.disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
 </style>

@@ -1,6 +1,7 @@
 class Paging {
   pageNum: number = 0;
   pageSize: number = 0;
+  totalPage: number = 0;
   list:any = [];
 
   constructor(pageSize: number) {
@@ -9,13 +10,15 @@ class Paging {
 
   setList(list:any) {
     this.list = list;
+    this.totalPage = Math.ceil(this.list.length / this.pageSize);
   }
 
   paginatedData = (page: any): any[] => {
     this.pageNum = page;
-    const start = this.pageNum * this.pageSize,
-          end = start + this.pageSize;
-    return this.list.slice(start, end);
+    const start = (this.pageNum -1 )* this.pageSize;
+    const end = start + this.pageSize;
+    const totalList = this.list.slice(start, end);
+    return totalList;
   }
   
   pageCount = (): number => {
@@ -25,10 +28,13 @@ class Paging {
     return page;
   }
 
+  isInvalidatePageNum(pageNum:number): boolean {
+    if (pageNum <= 0 || pageNum > this.totalPage) return true;
+    return false;
+  }
+
   isActiveNextButton = (num: number):boolean => {
-    console.log(num)
-    console.log(this.pageCount())
-    if(num >= this.pageCount() -1 ) {
+    if(num >= this.totalPage ) {
       return false;
     } else {
       return true;
@@ -36,7 +42,7 @@ class Paging {
   }
 
   isActivePrevButton = (num: number):boolean => {
-    if(num === 0) {
+    if(num <= 1) {
       return false;
     } else {
       return true;
