@@ -40,7 +40,7 @@
         <th @click="sort('age')">Age</th>
         <th>Gender</th>        
       </thead>
-      <tr v-for = "(userData, idx) in paginatedData()" :key = "idx" class = "userDataList">
+      <tr v-for = "(userData) in getPaginatedData(state.pageNum)" :key = "userData.id" class = "userDataList">
         <td>{{ userData.id }}</td>
         <td>{{ userData.name }}</td>
         <td>{{ userData.age }}</td>
@@ -52,18 +52,26 @@
   </div>
 
   <div class="btn-cover">
-      <button :disabled="state.pageNum === 0" @click="prevPage" class="page-btn">
-        이전
-      </button>
-      <span class="page-count">{{ state.pageNum + 1 }} / {{ pageCount() }} 페이지</span>
-      <button :disabled="state.pageNum >= pageCount() - 1" @click="nextPage" class="page-btn">
-        다음
-      </button>
-    </div>
-
+    <button @click="onChangeMinusPageNum" :class="state.buttonColor">
+      이전
+    </button>
+    <span class="page-count">{{ state.pageNum + 1 }} / {{ getPagingCount()}} 페이지</span>
+    <button @click="onChangePlusPageNum " :class="state.buttonColor">
+      다음
+    </button>
+  </div>
 </template>
 
 <script lang="ts">
+
+/**
+ * view에서 paging 직접호출 하지 X
+ * button disabled 사용하지 말고 class 로 처리하여 버튼 동작안되는 css로 적용하여 표시
+ * 컬럼 눌렀을때 sorting 되게 하기.
+ * 처음 sorting은 1: asc , 2: desc , 3: 처음 , 4:asc , 5: desc , 6: 처음 ....... 로 동작
+ * sorting시 page는 현재 보고 있는 페이지여야 한다.
+ * 오류 처리.
+ */
 
 import {reactive, defineComponent, onMounted} from 'vue';
 import axios from 'axios';
@@ -71,7 +79,7 @@ import ModalView from "./components/modalView.vue"
 import Content from "./components/content.vue";
 import alertContent from "./components/alertContent.vue"
 import { IUserData, ESortType } from "@/interface";
-
+import Paging from "./paging"
 
 export default defineComponent({
 
@@ -98,6 +106,8 @@ export default defineComponent({
      * selectData는 선택된 데이터를 담기위하여 선언한다.
      * addData는 추가할 데이터 복사 값을 위해 선언.
      * selectIdx는 선택된 데이터의 값이 userDatas 배열 중에서 몇 번 째인지를 담는다.
+     * 
+     * 
      */
     const state = reactive({
       userDatas: [] as IUserData[],
@@ -113,8 +123,21 @@ export default defineComponent({
       userId: 0,
       sortType: '' as ESortType,
       pageNum: 0,
-      pageSize: 3
+      pageSize: 2,
+      buttonColor: ''
     });
+
+    const paging = new Paging(state.pageSize);
+
+    const getPaginatedData = (num: number) => {
+     return paging.paginatedData(num);
+    }
+
+    const getPagingCount = () => {
+      return paging.pageCount();
+    }
+
+
     /**
      * 유저의 정보를 가져온다음 서버에 보내주고 status 코드가 200번이면 성공하였다는 메세지와 함께 업데이트 된 리스트를 뿌려준다
      * 그렇지 않을 경우 해당 status 코드에 맞는 메세지를 alert 창에 뿌려주고 리스트를 보여준다.
@@ -140,7 +163,8 @@ export default defineComponent({
      */
     const getUser = () => axios.get("/api/user").then((res: any) => {
       updateList(res);
-    });   
+      onChangePageNum()
+    }); 
 
     /**
      * Update 할 유저정보를 서버에 보내주고 status 코드가 200번이면 성공하였다는 메세지와 업데이트된 리스트를 뿌려준다
@@ -236,6 +260,7 @@ export default defineComponent({
 
     const updateList = (res: any) => {
       state.userDatas = res.data.data as IUserData[];
+      paging.setList(state.userDatas);
       if (state.sortType) doSort();
     }
 
@@ -307,30 +332,24 @@ export default defineComponent({
       return userDatas;
     }
 
-    const nextPage = () => {
-      state.pageNum += 1;
+    const onChangePlusPageNum = () => {
+      console.log(state.buttonColor)
+      if(paging.isActiveNextButton(state.pageNum)) {
+        state.pageNum++
+      } 
     }
 
-    const prevPage = () => {
-      state.pageNum -= 1;
+    const onChangeMinusPageNum = () => {
+      if(paging.isActivePrevButton(state.pageNum)) {
+        state.pageNum--
+      }
     }
 
-    const pageCount = (): number => {
-      let listLeng = state.userDatas.length,
-          listSize = state.pageSize,
-          page = Math.floor(listLeng / listSize);
-
-      if(listLeng % listSize > 0) page += 1;
-
-      return page;
+    const onChangePageNum = () => {
+      onChangePlusPageNum();
+      onChangeMinusPageNum();
     }
-
-    const paginatedData = (): IUserData[] => {
-      const start = state.pageNum * state.pageSize,
-            end = start + state.pageSize;
-      return state.userDatas.slice(start, end);
-    }
-
+    
     onMounted(() => {
       getUser()
     })
@@ -349,10 +368,11 @@ export default defineComponent({
       checkNameForm,
       deleteConfirmAction,
       sort,
-      nextPage,
-      prevPage,
-      pageCount,
-      paginatedData
+      paging,
+      onChangePlusPageNum,
+      onChangeMinusPageNum,
+      getPaginatedData,
+      getPagingCount
     };
   }
 })
