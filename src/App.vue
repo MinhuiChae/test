@@ -134,7 +134,7 @@ export default defineComponent({
 
     const moveCurrentPageAfterAdd = (num: number) => {
       console.log("paging.paginatedData(num).length", paging.paginatedData(num).length)
-      if(paging.paginatedData(num).length === state.pageSize) {
+      if(paging.paginatedData(num).length === state.pageSize && (getPagingTotalPageCount() > state.pageNum)) {
         state.pageNum ++;
       }
     }
