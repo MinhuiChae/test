@@ -114,7 +114,7 @@ export default defineComponent({
       userId: 0,
       sortType: '' as ESortType,
       pageNum: 0,
-      pageSize: 2,
+      pageSize: 4,
       dir:'asc',
       sortIdCnt: 0,
       copiedDatas: [] as IUserData[],
@@ -304,6 +304,7 @@ export default defineComponent({
     }
 
     //어떤 방식으로 정렬을 할지 정해주는 함수
+    //num 을 3으로 나눈 나머지가 1일 경우 asc, 2일경우 desc, 3일경우는 기존의 userList를 가져온다.
     const decideDirByCnt = (num: number) => {
       if(num % 3 === 1) {
           state.dir = ESortDir.ASC
