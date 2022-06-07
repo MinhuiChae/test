@@ -176,7 +176,6 @@ export default defineComponent({
     const getUser = () => axios.get("/api/user").then((res: any) => {
       updateList(res);
       state.pageNum = 1;
-      // onChangePageNum()
     }); 
 
     /**
@@ -222,6 +221,7 @@ export default defineComponent({
       deleteUser();
     }
   
+  //삭제를 하기 전 리스트가 하나밖에 없으면 그 리스트가 삭제된 후 현재의 페이지가 바로 직전의 페이지로 이동 됨.
     const deleteUser = () => {
       try {
         axios.delete("/api/user/" + state.userId).then((res: any) => {
@@ -303,120 +303,76 @@ export default defineComponent({
       }
     }
 
+    //어떤 방식으로 정렬을 할지 정해주는 함수
+    const decideDirByCnt = (num: number) => {
+      if(num % 3 === 1) {
+          state.dir = ESortDir.ASC
+        } else if(num % 3 === 2) {
+          state.dir = ESortDir.DESC
+        } else if(num % 3 === 0) {
+          state.dir = ESortDir.ORIGIN
+        }
+    }
+
+    //sortType 을 받아 key 별로 count를 해주어 decideDirByCnt에게 넘겨주어 decideDirByCnt가 정렬방식을 정해주면 해당 정렬방식으로 정렬한다.
     const sort = (sortType: string) => {
       state.sortType = sortType as ESortType;
       if(state.sortType === ESortType.Id) {
         state.sortIdCnt++;
-        if(state.sortIdCnt % 3 === 1) {
-          state.dir = ESortDir.ASC
-        } else if(state.sortIdCnt % 3 === 2) {
-          state.dir = ESortDir.DESC
-        } else if(state.sortIdCnt % 3 === 0) {
-          state.dir = ESortDir.ORIGIN
-        }
+        decideDirByCnt(state.sortIdCnt);
       } else if(state.sortType === ESortType.Name) {
         state.sortNameCnt++;
-        if(state.sortNameCnt % 3 === 1) {
-          state.dir = ESortDir.ASC
-        } else if(state.sortNameCnt % 3 === 2) {
-          state.dir = ESortDir.DESC
-        } else if(state.sortNameCnt % 3 === 0) {
-          state.dir = ESortDir.ORIGIN
-        }
+        decideDirByCnt(state.sortNameCnt);
       } else if(state.sortType === ESortType.Age) {
         state.sortAgeCnt++;
-        if(state.sortAgeCnt % 3 === 1) {
-          state.dir = ESortDir.ASC
-        } else if(state.sortAgeCnt % 3 === 2) {
-          state.dir = ESortDir.DESC
-        } else if(state.sortAgeCnt % 3 === 0) {
-          state.dir = ESortDir.ORIGIN
-        }
+        decideDirByCnt(state.sortAgeCnt);
       }
       doSort();
     }
 
+    //sort에서 정해진 sortType 과 유저리스트, 정렬 방식을 가져와 직접적으로 정렬하는 함수
     const doSort = () => {
-      switch(state.sortType) {
-        case ESortType.Id:
-          sortByUserId(state.userDatas, state.dir);
-          break;
-        case ESortType.Name:
-          sortByUserName(state.userDatas, state.dir);
-          break;
-        case ESortType.Age:
-          sortByUserAge(state.userDatas, state.dir);
-          break;
-      }
+      sortBySortType(state.sortType, state.userDatas, state.dir);
     }
 
-    const sortByUserId = (userDatas: IUserData[], dir: string) => {
+    const sortByAsc = <K extends keyof IUserData>(userDatas: IUserData[], key: K) => {
+      userDatas.sort((a: IUserData, b: IUserData) => {
+        if(a[key] < b[key]) return -1;
+        if(a[key] > b[key]) return 1;
+        return 0; 
+      });
+    }
+
+    const sortByDesc = <K extends keyof IUserData>(userDatas: IUserData[], key: K) => {
+      userDatas.sort((a: IUserData, b: IUserData) => {
+        if(a[key] > b[key]) return -1;
+        if(a[key] < b[key]) return 1;
+        return 0; 
+      });
+    }
+
+    //정렬방식별로 초기화객체인 userData에서 key 값을 가져와서 sortKey와 같은 값을 찾아서 sortByAsc 함수로 뿌려준다.
+    //dir이 origin 즉, else 의 경우 이미 값이 바꿔진 userDatas를 초기화 한 후 처음 UserData를 복사해두었던 copiedDatas를 다시 넣어준다.
+    const sortBySortType = (sortKey: string, userDatas: IUserData[], dir: string) => {
       if(dir === 'asc') {
-        userDatas.sort((a: IUserData, b: IUserData) => {
-          if(a.id < b.id) return -1;
-          if(a.id > b.id) return 1;
-          return 0;
-        });
+        Object.keys(userData).find((key) => {
+          if(key === sortKey) {
+            sortByAsc(userDatas, key as keyof IUserData);
+          }
+        })
       } else if(dir === 'desc') {
-        userDatas.sort((a: IUserData, b: IUserData) => {
-          if(a.id > b.id) return -1;
-          if(a.id < b.id) return 1;
-          return 0;
-        });
+        Object.keys(userData).find((key) => {
+          if(key === sortKey) {
+            sortByDesc(userDatas, key as keyof IUserData);
+          }
+        })
       } else {
-        console.log(state.copiedDatas)
         state.userDatas.length = 0;
         state.copiedDatas.forEach((a: IUserData) => state.userDatas.push(a))
       }
 
       return userDatas;
     }
-
-    const sortByUserName = (userDatas: IUserData[], dir: string) => {
-       if(dir === 'asc') {
-        userDatas.sort((a: IUserData, b: IUserData): number => {
-          if(a.name > b.name) return 1;
-          if(a.name < b.name) return -1;
-          else return 0;
-        });
-      } else if(dir === 'desc') {
-        userDatas.sort((a: IUserData, b: IUserData) => {
-          if(a.name > b.name) return -1;
-          if(a.name < b.name) return 1;
-          return 0;
-        });
-      } else {
-         console.log(state.copiedDatas)
-        state.userDatas.length = 0;
-        state.copiedDatas.forEach((a: IUserData) => state.userDatas.push(a))
-       
-      }
-      return userDatas;
-    }
-
-    const sortByUserAge = (userDatas: IUserData[], dir: string) => {
-       if(dir === 'asc') {
-        userDatas.sort((a: IUserData, b: IUserData) => {
-          if(a.age < b.age) return -1;
-          if(a.age > b.age) return 1;
-          return 0;
-        });
-      } else if(dir === 'desc') {
-        userDatas.sort((a: IUserData, b: IUserData) => {
-          if(a.age > b.age) return -1;
-          if(a.age < b.age) return 1;
-          return 0;
-        });
-      } else {
-         console.log(state.copiedDatas)
-        state.userDatas.length = 0;
-        state.copiedDatas.forEach((a: IUserData) => state.userDatas.push(a))
-      }
-
-      return userDatas;
-    }
-
-    
 
     const onChangePageNum = (num: number) => {
       const changePageNum = state.pageNum + num;
