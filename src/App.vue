@@ -126,9 +126,16 @@ export default defineComponent({
       return paging.paginatedData(num);
     }
 
-    const minusPageNumAfterDeleteList = (num: number) => {
+    const moveLastPageAfterDelete = (num: number) => {
       if(paging.paginatedData(num).length === 0) {
         state.pageNum --;
+      }
+    }
+
+    const moveCurrentPageAfterAdd = (num: number) => {
+      console.log("paging.paginatedData(num).length", paging.paginatedData(num).length)
+      if(paging.paginatedData(num).length === state.pageSize) {
+        state.pageNum ++;
       }
     }
 
@@ -154,6 +161,7 @@ export default defineComponent({
         }).then((res: any) => {
           updateList(res);   
           alertSuccessMessage(res);
+          moveCurrentPageAfterAdd(state.pageNum);
         }).catch((res:any) => alertFailMessage(res));
       } catch (e) {        
         console.log(e);
@@ -217,10 +225,8 @@ export default defineComponent({
         axios.delete("/api/user/" + state.userId).then((res: any) => {
           updateList(res);
           alertSuccessMessage(res);
-          minusPageNumAfterDeleteList(state.pageNum);
+          moveLastPageAfterDelete(state.pageNum);
         }).catch((res:any) => alertFailMessage(res));
-        
-     
       } catch (e) {
         console.log(e);
       }  
