@@ -123,10 +123,13 @@ export default defineComponent({
     const paging = new Paging(state.pageSize);
 
     const getPaginatedData = (num: number) => {
+      return paging.paginatedData(num);
+    }
+
+    const minusPageNumAfterDeleteList = (num: number) => {
       if(paging.paginatedData(num).length === 0) {
         state.pageNum --;
       }
-     return paging.paginatedData(num);
     }
 
     const canPrevPage = computed(() => paging.isActivePrevButton(state.pageNum));
@@ -214,7 +217,10 @@ export default defineComponent({
         axios.delete("/api/user/" + state.userId).then((res: any) => {
           updateList(res);
           alertSuccessMessage(res);
-        }).catch((res:any) => alertFailMessage(res))
+          minusPageNumAfterDeleteList(state.pageNum);
+        }).catch((res:any) => alertFailMessage(res));
+        
+     
       } catch (e) {
         console.log(e);
       }  
