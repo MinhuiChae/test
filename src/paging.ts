@@ -34,8 +34,6 @@ class Paging {
   }
 
   isActiveNextButton = (num: number):boolean => {
-    console.log("num", num);
-    console.log("this.totalPage", this.totalPage)
     if(num >= this.totalPage ) {
       return false;
     } else {

@@ -19,8 +19,15 @@ enum ESortType {
   "Age" = "age",
 }
 
+enum ESortDir {
+  "ASC" = "asc",
+  "DESC" = "desc",
+  "ORIGIN" = "origin"
+}
+
 export {
   IUserData,
   IUserInform,
-  ESortType
+  ESortType,
+  ESortDir
 }

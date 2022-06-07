@@ -35,9 +35,9 @@
   <div class = "container">
     <table class = "userListTable">
       <thead>
-        <th @click="sort('id', state.sortBy)">Id</th>
-        <th @click="sort('name', state.sortBy)">Name</th>
-        <th @click="sort('age', state.sortBy)">Age</th>
+        <th @click="sort('id')">Id</th>
+        <th @click="sort('name')">Name</th>
+        <th @click="sort('age')">Age</th>
         <th>Gender</th>        
       </thead>
       <tr v-for = "(userData) in getPaginatedData(state.pageNum)" :key = "userData.id" class = "userDataList">
@@ -69,7 +69,7 @@ import axios from 'axios';
 import ModalView from "./components/modalView.vue"
 import Content from "./components/content.vue";
 import alertContent from "./components/alertContent.vue"
-import { IUserData, ESortType } from "@/interface";
+import { IUserData, ESortType, ESortDir } from "@/interface";
 import Paging from "./paging"
 
 export default defineComponent({
@@ -113,12 +113,15 @@ export default defineComponent({
       confirmDelete: false,
       userId: 0,
       sortType: '' as ESortType,
-      sortBy: '',
       pageNum: 0,
       pageSize: 2,
       dir:'asc',
-      sortCnt: 0
+      sortIdCnt: 0,
+      copiedDatas: [] as IUserData[],
+      sortNameCnt: 0,
+      sortAgeCnt: 0,
     });
+
 
     const paging = new Paging(state.pageSize);
 
@@ -126,14 +129,13 @@ export default defineComponent({
       return paging.paginatedData(num);
     }
 
-    const moveLastPageAfterDelete = (num: number) => {
+    const moveCurrentPageAfterDelete = (num: number) => {
       if(paging.paginatedData(num).length === 0) {
         state.pageNum --;
       }
     }
 
     const moveCurrentPageAfterAdd = (num: number) => {
-      console.log("paging.paginatedData(num).length", paging.paginatedData(num).length)
       if(paging.paginatedData(num).length === state.pageSize && (getPagingTotalPageCount() > state.pageNum)) {
         state.pageNum ++;
       }
@@ -225,7 +227,7 @@ export default defineComponent({
         axios.delete("/api/user/" + state.userId).then((res: any) => {
           updateList(res);
           alertSuccessMessage(res);
-          moveLastPageAfterDelete(state.pageNum);
+          moveCurrentPageAfterDelete(state.pageNum);
         }).catch((res:any) => alertFailMessage(res));
       } catch (e) {
         console.log(e);
@@ -272,6 +274,7 @@ export default defineComponent({
 
     const updateList = (res: any) => {
       state.userDatas = res.data.data as IUserData[];
+      state.userDatas.forEach((a:IUserData) => state.copiedDatas.push(a));
       paging.setList(state.userDatas);
       if (state.sortType) doSort();
     }
@@ -299,57 +302,112 @@ export default defineComponent({
       }
     }
 
-    const sort = (sortType: string, sortBy: string) => {
-      state.sortCnt++;
+    const sort = (sortType: string) => {
       state.sortType = sortType as ESortType;
-      console.log(state.sortCnt)
-      if(state.sortCnt === 1) {
-        console.log(1)
+      if(state.sortType === ESortType.Id) {
+        state.sortIdCnt++;
+        if(state.sortIdCnt % 3 === 1) {
+          state.dir = ESortDir.ASC
+        } else if(state.sortIdCnt % 3 === 2) {
+          state.dir = ESortDir.DESC
+        } else if(state.sortIdCnt % 3 === 0) {
+          state.dir = ESortDir.ORIGIN
+        }
+      } else if(state.sortType === ESortType.Name) {
+        state.sortNameCnt++;
+        if(state.sortNameCnt % 3 === 1) {
+          state.dir = ESortDir.ASC
+        } else if(state.sortNameCnt % 3 === 2) {
+          state.dir = ESortDir.DESC
+        } else if(state.sortNameCnt % 3 === 0) {
+          state.dir = ESortDir.ORIGIN
+        }
+      } else if(state.sortType === ESortType.Age) {
+        state.sortAgeCnt++;
+        if(state.sortAgeCnt % 3 === 1) {
+          state.dir = ESortDir.ASC
+        } else if(state.sortAgeCnt % 3 === 2) {
+          state.dir = ESortDir.DESC
+        } else if(state.sortAgeCnt % 3 === 0) {
+          state.dir = ESortDir.ORIGIN
+        }
       }
-      state.sortBy = sortBy;
-
-       console.log(sortBy)
-
       doSort();
     }
 
     const doSort = () => {
       switch(state.sortType) {
         case ESortType.Id:
-          sortByUserId(state.userDatas);
+          sortByUserId(state.userDatas, state.dir);
           break;
         case ESortType.Name:
-          sortByUserName(state.userDatas);
+          sortByUserName(state.userDatas, state.dir);
           break;
         case ESortType.Age:
-          sortByUserAge(state.userDatas);
+          sortByUserAge(state.userDatas, state.dir);
           break;
       }
     }
 
-    const sortByUserId = (userDatas: IUserData[]) => {
-      userDatas.sort((a: IUserData, b: IUserData) => {
-        return a.id - b.id;
-      });
+    const sortByUserId = (userDatas: IUserData[], dir: string) => {
+      if(dir === 'asc') {
+        userDatas.sort((a: IUserData, b: IUserData) => {
+          if(a.id < b.id) return -1;
+          if(a.id > b.id) return 1;
+          return 0;
+        });
+      } else if(dir === 'desc') {
+        userDatas.sort((a: IUserData, b: IUserData) => {
+          if(a.id > b.id) return -1;
+          if(a.id < b.id) return 1;
+          return 0;
+        });
+      } else {
+        state.userDatas.length = 0;
+        state.copiedDatas.forEach((a: IUserData) => state.userDatas.push(a))
+      }
 
       return userDatas;
     }
 
-    const sortByUserName = (userDatas: IUserData[]) => {
-      userDatas.sort((a: IUserData, b: IUserData): number => {
-        if(a.name > b.name) return 1;
-        if(a.name < b.name) return -1;
-        else return 0;
-      });
-
+    const sortByUserName = (userDatas: IUserData[], dir: string) => {
+       if(dir === 'asc') {
+        userDatas.sort((a: IUserData, b: IUserData): number => {
+          if(a.name > b.name) return 1;
+          if(a.name < b.name) return -1;
+          else return 0;
+        });
+      } else if(dir === 'desc') {
+        userDatas.sort((a: IUserData, b: IUserData) => {
+          if(a.name > b.name) return -1;
+          if(a.name < b.name) return 1;
+          return 0;
+        });
+      } else {
+        state.userDatas.length = 0;
+        state.copiedDatas.forEach((a: IUserData) => state.userDatas.push(a))
+      }
       return userDatas;
     }
 
-    const sortByUserAge = (userDatas: IUserData[]) => {
-      userDatas.sort((a: IUserData, b: IUserData) => {
-        return a.age - b.age;
-      });
-      
+    const sortByUserAge = (userDatas: IUserData[], dir: string) => {
+       if(dir === 'asc') {
+        userDatas.sort((a: IUserData, b: IUserData) => {
+          if(a.id < b.id) return -1;
+          if(a.id > b.id) return 1;
+          return 0;
+        });
+      } else if(dir === 'desc') {
+        userDatas.sort((a: IUserData, b: IUserData) => {
+          if(a.id > b.id) return -1;
+          if(a.id < b.id) return 1;
+          return 0;
+        });
+      } else {
+        state.userDatas.length = 0;
+        state.copiedDatas.forEach((a: IUserData) => state.userDatas.push(a))
+      }
+
       return userDatas;
     }
 
