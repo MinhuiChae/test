@@ -52,11 +52,11 @@
   </div>
 
   <div class="btn-cover">
-    <button @click="onChangePageNum(-1)" :class="{'disabled': !canPrevPage}">
+    <button @click="onChangePageNum(-1)" :class="{'disabled': !canPrevPage, 'page-btn': canPrevPage}">
       이전
     </button>
     <span class="page-count">{{ state.pageNum }} / {{ getPagingTotalPageCount()}} 페이지</span>
-    <button @click="onChangePageNum(+1) " :class="{'disabled': !canNextPage}">
+    <button @click="onChangePageNum(+1) " :class="{'disabled': !canNextPage, 'page-btn': canNextPage}">
       다음
     </button>
   </div>
@@ -274,6 +274,7 @@ export default defineComponent({
 
     const updateList = (res: any) => {
       state.userDatas = res.data.data as IUserData[];
+      state.copiedDatas.length = 0;
       state.userDatas.forEach((a:IUserData) => state.copiedDatas.push(a));
       paging.setList(state.userDatas);
       if (state.sortType) doSort();
@@ -363,6 +364,7 @@ export default defineComponent({
           return 0;
         });
       } else {
+        console.log(state.copiedDatas)
         state.userDatas.length = 0;
         state.copiedDatas.forEach((a: IUserData) => state.userDatas.push(a))
       }
@@ -384,8 +386,10 @@ export default defineComponent({
           return 0;
         });
       } else {
+         console.log(state.copiedDatas)
         state.userDatas.length = 0;
         state.copiedDatas.forEach((a: IUserData) => state.userDatas.push(a))
+       
       }
       return userDatas;
     }
@@ -393,17 +397,18 @@ export default defineComponent({
     const sortByUserAge = (userDatas: IUserData[], dir: string) => {
        if(dir === 'asc') {
         userDatas.sort((a: IUserData, b: IUserData) => {
-          if(a.id < b.id) return -1;
-          if(a.id > b.id) return 1;
+          if(a.age < b.age) return -1;
+          if(a.age > b.age) return 1;
           return 0;
         });
       } else if(dir === 'desc') {
         userDatas.sort((a: IUserData, b: IUserData) => {
-          if(a.id > b.id) return -1;
-          if(a.id < b.id) return 1;
+          if(a.age > b.age) return -1;
+          if(a.age < b.age) return 1;
           return 0;
         });
       } else {
+         console.log(state.copiedDatas)
         state.userDatas.length = 0;
         state.copiedDatas.forEach((a: IUserData) => state.userDatas.push(a))
       }
@@ -458,18 +463,19 @@ export default defineComponent({
   text-align: center;
 }
 .btn-cover .page-btn {
-  width: 5rem;
-  height: 2rem;
   letter-spacing: 0.5px;
 }
 .btn-cover .page-count {
   padding: 0 1rem;
 }
 
-
 .disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
+  width:100px;
+  height:35px;
+  border:0px;
+  margin:0px;
+  background-color: #e2e2e2;
+  color:#000;
 }
 
 </style>
