@@ -18,6 +18,7 @@ class Paging {
     const start = (this.pageNum -1 )* this.pageSize;
     const end = start + this.pageSize;
     const totalList = this.list.slice(start, end);
+
     return totalList;
   }
   

@@ -120,8 +120,9 @@ export default defineComponent({
       copiedDatas: [] as IUserData[],
       sortNameCnt: 0,
       sortAgeCnt: 0,
+      addUserIndex:0,
+      currendPage:0
     });
-
 
     const paging = new Paging(state.pageSize);
 
@@ -135,10 +136,29 @@ export default defineComponent({
       }
     }
 
-    const moveCurrentPageAfterAdd = (num: number) => {
-      if(paging.paginatedData(num).length === state.pageSize && (getPagingTotalPageCount() > state.pageNum)) {
-        state.pageNum ++;
+    const division = (arr:any[], num: number) => {
+      arr.push(String(arr.length))
+      const length = arr.length;
+      const divide = Math.floor(length / num) + (Math.floor(length % num) > 0 ? 1 : 0);
+      const newArray = [];
+
+      for(let i = 1; i <= divide; i++) {
+        newArray.push(arr.splice(1, num));
       }
+
+      return newArray;
+    }
+
+    const moveCurrentPageAfterAdd = () => {
+      const dividedList = division(Object.keys(state.userDatas), state.pageSize);
+      const addIndexs = String(state.addUserIndex+1);
+      let index: number = 0;
+        for(let key in dividedList) {
+          if(dividedList[key].find((value) => value === addIndexs)) {
+            index = Number(key)+1;
+          }
+        }
+      return index;
     }
 
     const canPrevPage = computed(() => paging.isActivePrevButton(state.pageNum));
@@ -147,7 +167,6 @@ export default defineComponent({
     const getPagingTotalPageCount = () => {
       return paging.totalPage;
     }
-
 
     /**
      * 유저의 정보를 가져온다음 서버에 보내주고 status 코드가 200번이면 성공하였다는 메세지와 함께 업데이트 된 리스트를 뿌려준다
@@ -161,14 +180,24 @@ export default defineComponent({
           age: state.selectData.age,
           gender: state.selectData.gender
         }).then((res: any) => {
-          updateList(res);   
+          updateList(res);
+          getIndexAfterAdd();
           alertSuccessMessage(res);
-          moveCurrentPageAfterAdd(state.pageNum);
+          moveCurrentPageAfterAdd();
+          changePageNumAfterAdd();
         }).catch((res:any) => alertFailMessage(res));
       } catch (e) {        
         console.log(e);
       }
     };
+
+    const getIndexAfterAdd = () => {
+      state.addUserIndex = state.userDatas.findIndex((a:IUserData) => a.id === state.selectData.id);
+    }
+
+    const changePageNumAfterAdd = () => {
+      state.pageNum = moveCurrentPageAfterAdd();
+    }
 
     /**
      * 동적변화를 하는 userDatas 리스트를 요청된 리스트로 업데이트 한다.
@@ -284,6 +313,7 @@ export default defineComponent({
       state.alertModal = true; 
       state.alertMsg = res.data.msg;
       state.modal = false;
+      state.confirmDelete = false;
     }
 
     const alertFailMessage = (res: any) => {
@@ -305,14 +335,14 @@ export default defineComponent({
 
     //어떤 방식으로 정렬을 할지 정해주는 함수
     //num 을 3으로 나눈 나머지가 1일 경우 asc, 2일경우 desc, 3일경우는 기존의 userList를 가져온다.
-    const decideDirByCnt = (num: number) => {
-      if(num % 3 === 1) {
-          state.dir = ESortDir.ASC
-        } else if(num % 3 === 2) {
-          state.dir = ESortDir.DESC
-        } else if(num % 3 === 0) {
-          state.dir = ESortDir.ORIGIN
-        }
+    const decideDirByCnt = (sortNum: number, num:number) => {
+      if(sortNum % num === 1) {
+        state.dir = ESortDir.ASC
+      } else if(sortNum % num === 2) {
+        state.dir = ESortDir.DESC
+      } else if(sortNum % num === 0) {
+        state.dir = ESortDir.ORIGIN
+      }
     }
 
     //sortType 을 받아 key 별로 count를 해주어 decideDirByCnt에게 넘겨주어 decideDirByCnt가 정렬방식을 정해주면 해당 정렬방식으로 정렬한다.
@@ -320,13 +350,13 @@ export default defineComponent({
       state.sortType = sortType as ESortType;
       if(state.sortType === ESortType.Id) {
         state.sortIdCnt++;
-        decideDirByCnt(state.sortIdCnt);
+        decideDirByCnt(state.sortIdCnt, 3);
       } else if(state.sortType === ESortType.Name) {
         state.sortNameCnt++;
-        decideDirByCnt(state.sortNameCnt);
+        decideDirByCnt(state.sortNameCnt, 3);
       } else if(state.sortType === ESortType.Age) {
         state.sortAgeCnt++;
-        decideDirByCnt(state.sortAgeCnt);
+        decideDirByCnt(state.sortAgeCnt, 3);
       }
       doSort();
     }
@@ -336,7 +366,7 @@ export default defineComponent({
       sortBySortType(state.sortType, state.userDatas, state.dir);
     }
 
-    const sortByAsc = <K extends keyof IUserData>(userDatas: IUserData[], key: K) => {
+    const sortAsAsc = <K extends keyof IUserData>(userDatas: IUserData[], key: K) => {
       userDatas.sort((a: IUserData, b: IUserData) => {
         if(a[key] < b[key]) return -1;
         if(a[key] > b[key]) return 1;
@@ -344,7 +374,7 @@ export default defineComponent({
       });
     }
 
-    const sortByDesc = <K extends keyof IUserData>(userDatas: IUserData[], key: K) => {
+    const sortAsDesc = <K extends keyof IUserData>(userDatas: IUserData[], key: K) => {
       userDatas.sort((a: IUserData, b: IUserData) => {
         if(a[key] > b[key]) return -1;
         if(a[key] < b[key]) return 1;
@@ -358,13 +388,13 @@ export default defineComponent({
       if(dir === 'asc') {
         Object.keys(userData).find((key) => {
           if(key === sortKey) {
-            sortByAsc(userDatas, key as keyof IUserData);
+            sortAsAsc(userDatas, key as keyof IUserData);
           }
         })
       } else if(dir === 'desc') {
         Object.keys(userData).find((key) => {
           if(key === sortKey) {
-            sortByDesc(userDatas, key as keyof IUserData);
+            sortAsDesc(userDatas, key as keyof IUserData);
           }
         })
       } else {
@@ -377,7 +407,7 @@ export default defineComponent({
 
     const onChangePageNum = (num: number) => {
       const changePageNum = state.pageNum + num;
-      if( paging.isInvalidatePageNum(changePageNum) === false) {
+      if(paging.isInvalidatePageNum(changePageNum) === false) {
         state.pageNum = changePageNum;        
       } 
     }
@@ -431,7 +461,7 @@ export default defineComponent({
   height:35px;
   border:0px;
   margin:0px;
-  background-color: #e2e2e2;
+  background-color: gray;
   color:#000;
 }
 

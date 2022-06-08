@@ -4,27 +4,6 @@ body {
 div {
   box-sizing: border-box;
 }
-
-// button {
-//   width:100px;
-//   height:35px;
-//   border:0px;
-//   margin:0px;
-//   background-color: #e2e2e2;
-//   transition: all 0.5s ease;
-//   color:#000;
-//   &:hover {
-//     background-color: #bbb;
-//     color:#fff;
-//     cursor: pointer;
-//     font-size:1.2em;
-//   }
-
-//   &:active {
-//     background-color: #666;
-//   }
-// }
-
 .page-btn {
   width:100px;
   height:35px;
@@ -44,7 +23,7 @@ div {
   height:35px;
   border:0px;
   margin:0px;
-  background-color: #e2e2e2;
+  background-color: gray;
   color:#000;
 }
 
