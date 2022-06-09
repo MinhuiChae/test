@@ -5,6 +5,14 @@ interface IInformReq{
   gender: string,
 }
 
+interface IBoardInform {
+  bbsSeq: number,
+  userId: number,
+  title: string,
+  content: string
+}
+
 export {
-  IInformReq
+  IInformReq,
+  IBoardInform
 } ;
