@@ -1,5 +1,7 @@
 import BoardModel from "../model/boardReqModel";
 import BbsModel from "../model/boardResModel";
+import ReplyReqModel from "../model/replyReqModel";
+import ReplyResModel from "../model/replyResModel";
 import { ESortDir} from "../enum/index";
 import { IBoardInform } from "../interface";
 
@@ -26,12 +28,14 @@ const sortAsDesc = <K extends keyof IBoardInform>(userDatas: IBoardInform[], key
 
 class boardService {
   boardList: BbsModel[] = [];
+  replyList: ReplyResModel[] = [];
   boardPageList: BbsModel[] = [];
   dir: ESortDir = ESortDir.ASC;
   sortType: string = '';
  
-  constructor(boardList: BbsModel[]) {
+  constructor(boardList: BbsModel[], replyList: ReplyResModel[]) {
     this.boardList = boardList;
+    this.replyList = replyList;
   }
 
   getBoardList(): BbsModel[] {
@@ -103,6 +107,11 @@ class boardService {
     return board;
   }
 
+  findReplyByReplySeq(replySeq: number): ReplyResModel | undefined {
+    const reply = this.replyList.find((seq) => seq.replySeq === replySeq);
+    return reply;
+  }
+
   postBoard(board: BbsModel): void {
     this.boardList.push(board);
   }
@@ -119,8 +128,18 @@ class boardService {
     this.boardList.splice(boardIndex, 1);
   }
 
+  deleteReply(replySeq: number): void{
+    const replyIndex = this.findReplyIndex(replySeq);
+    this.replyList.splice(replyIndex, 1);
+  }
+
   findBoardIndex(bbsSeq: number): number {
     const index = this.boardList.findIndex((bbsModel) => bbsModel.bbsSeq === bbsSeq);
+    return index;
+  }
+
+  findReplyIndex(replySeq: number): number {
+    const index = this.replyList.findIndex((replyModel) => replyModel.bbsSeq === replySeq);
     return index;
   }
 
@@ -130,6 +149,27 @@ class boardService {
     })
   }
 
+  updateReply(updateModel: ReplyReqModel, reqModel: ReplyReqModel) {
+    Object.keys(updateModel).forEach((key) => {
+      update(updateModel, reqModel, key as keyof ReplyReqModel);
+    })
+  }
+
+  addReplyAtOwnBoard(ownList: ReplyResModel[], paramsSeq: number) {
+    this.replyList.map((list) => {
+      if(list.bbsSeq === paramsSeq) {
+        ownList.push(list)
+      }
+    });
+  }
+
+  postReply(resReply: ReplyResModel) {
+    this.replyList.push(resReply);
+  }
+
+  getReplyList():ReplyResModel[] {
+    return this.replyList;
+  }
 }
 
 export default boardService;

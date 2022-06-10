@@ -43,6 +43,12 @@ router.get("/api/board/:bbsSeq/reply", (req: express.Request, res: express.Respo
 router.post("/api/board/:bbsSeq/reply", (req: express.Request, res: express.Response) => {
   new BoardController(req, res).postReply();
 });
+router.delete("/api/board/:bbsSeq/reply/:replySeq", (req: express.Request, res: express.Response) => {
+  new BoardController(req, res).deleteReply();
+});
+router.put("/api/board/:bbsSeq/reply/:replySeq", (req: express.Request, res: express.Response) => {
+  new BoardController(req, res).updateReply();
+});
 
 module.exports = router;
 
