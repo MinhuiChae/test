@@ -6,7 +6,6 @@ interface IInformReq{
 }
 
 interface IBoardInform {
-  bbsSeq: number,
   userId: number,
   title: string,
   content: string
