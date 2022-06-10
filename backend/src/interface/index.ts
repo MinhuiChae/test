@@ -6,7 +6,6 @@ interface IInformReq{
 }
 
 interface IBoardInform {
-  userId: number,
   title: string,
   content: string
 }

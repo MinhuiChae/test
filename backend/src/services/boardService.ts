@@ -1,4 +1,5 @@
 import BoardModel from "../model/boardModel";
+import BbsModel from "../model/includeSeqModel";
 import { ESortDir} from "../enum/index";
 import { IBoardInform } from "../interface";
 
@@ -18,16 +19,16 @@ const sortAsDesc = <K extends keyof IBoardInform>(userDatas: IBoardInform[], key
 })}
 
 class boardService {
-  boardList: BoardModel[] = [];
-  boardPageList: BoardModel[] = [];
+  boardList: BbsModel[] = [];
+  boardPageList: BbsModel[] = [];
   dir: ESortDir = ESortDir.ASC;
   sortType: string = '';
  
-  constructor(boardList: BoardModel[]) {
+  constructor(boardList: BbsModel[]) {
     this.boardList = boardList;
   }
 
-  getBoardList(): BoardModel[] {
+  getBoardList(): BbsModel[] {
     return this.boardList;
   }
 
@@ -46,7 +47,7 @@ class boardService {
     }
   }
 
-  getBoardPageList(): BoardModel[] {
+  getBoardPageList(): BbsModel[] {
     return this.boardPageList;
   }
 
@@ -90,6 +91,11 @@ class boardService {
     } 
     return this.boardList;
 
+  }
+
+  findBoardByBbsSeq(paramsSeq: number):BbsModel | undefined {
+    const board = this.boardList.find((seq) => seq.bbsSeq === paramsSeq)
+    return board;
   }
 }
 
