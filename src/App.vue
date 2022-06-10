@@ -153,11 +153,11 @@ export default defineComponent({
       const dividedList = division(Object.keys(state.userDatas), state.pageSize);
       const addIndexs = String(state.addUserIndex+1);
       let index: number = 0;
-        for(let key in dividedList) {
-          if(dividedList[key].find((value) => value === addIndexs)) {
-            index = Number(key)+1;
-          }
+      for(let key in dividedList) {
+        if(dividedList[key].find((value) => value === addIndexs)) {
+          index = Number(key)+1;
         }
+      }
       return index;
     }
 

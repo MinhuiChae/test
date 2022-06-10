@@ -10,7 +10,13 @@ interface IBoardInform {
   content: string
 }
 
+interface IReplyInform {
+  content: string
+}
+
 export {
   IInformReq,
-  IBoardInform
+  IBoardInform,
+  IReplyInform
+  
 } ;

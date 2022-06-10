@@ -1,12 +1,12 @@
-import boardModel from "./boardModel"
+import boardModel from "./boardReqModel"
 import { IBoardInform } from "../interface";
 
 class BbsSeqModel extends boardModel{
   bbsSeq: number = 0;
-  userName: string = "";
-  constructor(bbsSeq: number,  userName: string, req: IBoardInform) {
+  userId: number = 0;
+  constructor(bbsSeq: number,  userId: number, req: IBoardInform) {
     super(req);
-    this.userName = userName;
+    this.userId = userId;
     this.bbsSeq = bbsSeq;
   }
 }

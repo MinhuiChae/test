@@ -26,6 +26,24 @@ router.get("/api/board", (req: express.Request, res: express.Response) => {
 router.get("/api/board/:bbsSeq", (req: express.Request, res: express.Response) => {
   new BoardController(req, res).getBoardDetail();
 });
+router.post("/api/board/:id", (req: express.Request, res: express.Response) => {
+  new BoardController(req, res).postBoard();
+});
+router.delete("/api/board/:bbsSeq", (req: express.Request, res: express.Response) => {
+  new BoardController(req, res).deleteBoard();
+});
+router.put("/api/board/:bbsSeq", (req: express.Request, res: express.Response) => {
+  new BoardController(req, res).updateBoard();
+});
+
+//reply
+router.get("/api/board/:bbsSeq/reply", (req: express.Request, res: express.Response) => {
+  new BoardController(req, res).getReplyList();
+});
+router.post("/api/board/:bbsSeq/reply", (req: express.Request, res: express.Response) => {
+  new BoardController(req, res).postReply();
+});
+
 module.exports = router;
 
 export default router;

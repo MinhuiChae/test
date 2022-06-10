@@ -1,7 +1,13 @@
-import BoardModel from "../model/boardModel";
-import BbsModel from "../model/includeSeqModel";
+import BoardModel from "../model/boardReqModel";
+import BbsModel from "../model/boardResModel";
 import { ESortDir} from "../enum/index";
 import { IBoardInform } from "../interface";
+
+const update = <BoardModel , K extends keyof BoardModel>(updateModel: BoardModel, reqModel: BoardModel, key: K) => {
+  if (reqModel[key]) { 
+    updateModel[key] = reqModel[key];
+  }
+}
 
 const sortAsAsc = <K extends keyof IBoardInform>(userDatas: IBoardInform[], key: K) => {
   userDatas.sort((a: IBoardInform, b: IBoardInform) => {
@@ -90,13 +96,40 @@ class boardService {
       })
     } 
     return this.boardList;
-
   }
 
   findBoardByBbsSeq(paramsSeq: number):BbsModel | undefined {
     const board = this.boardList.find((seq) => seq.bbsSeq === paramsSeq)
     return board;
   }
+
+  postBoard(board: BbsModel): void {
+    this.boardList.push(board);
+  }
+
+  getPageCount(pageSize: number): number {
+    let page = Math.floor(this.boardList.length / pageSize);
+    if(this.boardList.length % pageSize > 0) page += 1;
+  
+    return page;
+  }
+
+  deleteBoard(bbsSeq: number): void {
+    const boardIndex = this.findBoardIndex(bbsSeq);
+    this.boardList.splice(boardIndex, 1);
+  }
+
+  findBoardIndex(bbsSeq: number): number {
+    const index = this.boardList.findIndex((bbsModel) => bbsModel.bbsSeq === bbsSeq);
+    return index;
+  }
+
+  updateBoard(updateModel: BoardModel, reqModel: BoardModel) {
+    Object.keys(updateModel).forEach((key) => {
+      update(updateModel, reqModel, key as keyof BoardModel);
+    })
+  }
+
 }
 
 export default boardService;
