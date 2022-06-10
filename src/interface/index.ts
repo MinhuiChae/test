@@ -12,6 +12,14 @@ interface IUserInform {
   selectOption?: string[]
 }
 
+interface IBoardInform {
+  title: string,
+  content: string
+}
+
+interface IReplyInform {
+  content: string
+}
 
 enum ESortType {
   "Id" = "id",
@@ -29,5 +37,7 @@ export {
   IUserData,
   IUserInform,
   ESortType,
-  ESortDir
+  ESortDir,
+  IBoardInform,
+  IReplyInform
 }

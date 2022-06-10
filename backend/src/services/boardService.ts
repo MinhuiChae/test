@@ -49,7 +49,6 @@ class boardService {
     if(endItemNo > (this.boardList.length -1)) {
       endItemNo = this.boardList.length - 1;
     }
-    
     if(startItemNo < this.boardList.length) {
       for(let index = startItemNo; index <= endItemNo; index++) {
         this.boardPageList.push(this.boardList[index]);
