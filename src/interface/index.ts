@@ -17,6 +17,13 @@ interface IBoardInform {
   content: string
 }
 
+interface IResBoardInform {
+  title: string,
+  content: string,
+  bbsSeq: number,
+  userId: number
+}
+
 interface IReplyInform {
   content: string
 }
@@ -39,5 +46,6 @@ export {
   ESortType,
   ESortDir,
   IBoardInform,
-  IReplyInform
+  IReplyInform,
+  IResBoardInform
 }

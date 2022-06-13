@@ -44,7 +44,7 @@ padding:15px;
   background: white;
   border-radius: 8px; padding: 20px; 
 }
-.userListTable {
+.userListTable, .boardDetailView {
   width: 80%;
   border: 1px solid #E1E1E1;
   border-collapse: collapse;
@@ -58,11 +58,11 @@ padding:15px;
 table tr {
   text-align: center; 
 }
-table th, .userDataList td {
+table th, .dataList td {
   border: 1px solid #E1E1E1;
   cursor: pointer;
 }
-.userDataList:hover {
+.dataList:hover {
   background: lightgray;
 }
 
@@ -157,4 +157,26 @@ table th, .userDataList td {
   height: 30px;
   border:1px solid #BDBDBD;
   background-color: #E1E1E1;
+}
+.backToListButton, .backToHomeButton {
+  margin-top:60px;
+  margin-right: 20px;
+  float: right;
+}
+.boardTitle {
+  text-align: center;
+  font-size: 2em;
+  margin-top: 100px;
+}
+.buttonDiv {
+  margin-right: 140px;
+}
+.boardDetailView tr{
+  border-bottom: 1px solid black;
+}
+.content {
+  height: 150px;
+}
+.userId {
+  height: 35px;
 }

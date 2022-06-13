@@ -20,7 +20,7 @@ router.put("/api/user", (req: express.Request, res: express.Response) => {
 });
 
 //board
-router.get("/api/board", (req: express.Request, res: express.Response) => {
+router.get("/api/board/", (req: express.Request, res: express.Response) => {
   new BoardController(req, res).getBoardList();
 });
 router.get("/api/board/:bbsSeq", (req: express.Request, res: express.Response) => {
