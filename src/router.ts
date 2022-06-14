@@ -20,10 +20,11 @@ const routes = [
     props: true
   },
   {
-    path:'/write/:totalPage',
+    path:'/write/',
     name:"Write",
-    component: () => import('./Board/Write.vue')
-  }
+    component: () => import('./Board/Write.vue'),
+    props: true
+  },
 ]
 
 export const router = createRouter({

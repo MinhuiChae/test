@@ -4,7 +4,15 @@
   <div class="buttonDiv">
     <button @click="movePageToList(state.pageNo, state.isVisitedDetailVue)" class="backToListButton">리스트</button>
     <button @click="movePageToHome()" class="backToHomeButton">Home</button>
-    <button @click="movePageToUpdate()" class="backToHomeButton">수정</button>
+    <router-link :to="{ name: 'Write', params: { 
+      title: state.board.title, 
+      content:state.board.content, 
+      pageNo: state.pageNo, 
+      bbsSeq: state.bbsSeq,
+      update: true
+    }}">
+    <button class="backToHomeButton">수정</button>
+    </router-link>
     <button @click="deleteBoard" class="backToHomeButton">삭제</button>
   </div>
   <table class="boardDetailView">
@@ -29,7 +37,7 @@ export default defineComponent({
     pageNo: Number
   },
   setup(props) {
-    const userData: IResBoardInform = {
+    const boardData: IResBoardInform = {
       title: '',
       content: '',
       bbsSeq: 0,
@@ -38,7 +46,7 @@ export default defineComponent({
 
     const state = reactive({
       bbsSeq: 0,
-      board: userData  as IResBoardInform,
+      board: boardData  as IResBoardInform,
       pageNo: 0,
       isVisitedDetailVue: true
     })
@@ -72,9 +80,6 @@ export default defineComponent({
     },
     movePageToHome() {
       window.location.href='/'
-    },
-    movePageToUpdate() {
-      window.location.href = "/Write"
     }
   }
 });

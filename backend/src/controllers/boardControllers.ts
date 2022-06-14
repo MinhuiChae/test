@@ -105,7 +105,7 @@ class BoardController {
       const resBoard: BoardResModel | undefined = this.boardService.findBoardByBbsSeq(bbsSeq);
       if(resBoard) {
         this.boardService.updateBoard(resBoard, board);
-        this.boardResponse.response(EStatusCode.SUCCESS, ResponseMessage.SUCCESS, this.boardService.getBoardList())
+        this.boardResponse.response(EStatusCode.SUCCESS, ResponseMessage.SUCCESS, board)
       } else {
         this.boardResponse.response(EStatusCode.NOTFOUND, ResponseMessage.NOT_FOUNT_BBSSEQ, []);
       }

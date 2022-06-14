@@ -2,7 +2,14 @@
 
     <div class="boardTitle">BoardList</div>
     <div class="buttonDiv">
-      <button class="wirteBoardButton" @click="moveWirtePage">글쓰기</button>
+    <router-link :to="{ name: 'Write', params: { 
+      totalPage: state.totalPage,
+      curPerPage: state.countPerPage,
+      boardListLength: state.boardList.length,
+      post: true,
+    }}">
+    <button class="backToHomeButton">글쓰기</button>
+    </router-link>
     </div>
     <div class = "container">
     <table class = "userListTable">
@@ -67,7 +74,6 @@ export default defineComponent({
       state.boardList.length = 0;
       state.boardList = res.data.data;
       state.totalPage = res.data.totalPage;
-      console.log(state.boardList)
     }
 
     const onChangePageNum = (num: number) => {
@@ -114,9 +120,6 @@ export default defineComponent({
   methods: {
     moveDetailPage(bbsSeq: number, pageNo: number) {
       window.location.href='/detail/' + bbsSeq + "/" + pageNo;
-    },
-    moveWirtePage() {
-      window.location.href='/write/' + this.state.totalPage;
     }
   },
   created() {
