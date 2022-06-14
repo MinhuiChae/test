@@ -1,8 +1,8 @@
 <template>
-
+  <div class="button">
     <button class="wirteBoardButton" @click.stop = "changeBoardInform" >글쓰기</button>
-    <button class="backToHomeButton" @click.stop = "movePageToHome" >리스트</button>
-
+    <button class="backToHomeListButton" @click.stop = "movePageToHome" >리스트</button>
+  </div>
   <div>
     <form ref = 'el' class="boardDetailView">
       <ul>
@@ -25,7 +25,7 @@
 import {reactive, defineComponent, ref} from 'vue';
 import useObject from '@/composition/useObject';
 import { THTMLElement } from '@/types';
-import { IBoardInform } from "@/interface";
+import { IBoardInform , IResBoardInform} from "@/interface";
 import axios from 'axios';
 export default defineComponent({
   name: 'write-detail',
@@ -34,15 +34,31 @@ export default defineComponent({
       title: '',
       content: ''
     }
+
+    const userData: IResBoardInform = {
+      title: '',
+      content: '',
+      bbsSeq: 0,
+      userId:0
+    };
+
     const state = reactive({
       userId: 3,
-      Data: boardInform as IBoardInform
+      Data: boardInform as IBoardInform,
+      isDisabled: false,
+      resData: userData as IResBoardInform,
+      totalPage: 0
     })
 
     const postBoard = () =>  axios.post("/api/board/" + state.userId, {
       title: state.Data.title,
       content: state.Data.content,
-    })
+    }).then((res: any) => {
+      state.isDisabled = true;
+      state.resData = res.data.data as IResBoardInform;
+      window.location.href="/detail/" + state.resData.bbsSeq + "/" + state.totalPage
+      alert(res.data.msg);
+    }).catch((res:any) => alert(res.data.msg));
 
 
     const el = ref<HTMLFormElement>();
@@ -60,7 +76,6 @@ export default defineComponent({
           if(key) {
             isValidInform(key, value);
           }
-
           console.log(key, value)
         })
       }
@@ -68,8 +83,6 @@ export default defineComponent({
       if(checkFormList.length === 0) {
         state.Data = changeIBoardData;
         postBoard()
-        alert('성공')
-        console.log(changeIBoardData)
       } else {
         alert(checkFormList + '를 확인하세요')
       }
@@ -84,10 +97,6 @@ export default defineComponent({
       }
     }
 
-   
-
-    
-
     // const inputList:IBoardInputInform[] = [
     //   {
     //     name: 'title',
@@ -100,14 +109,14 @@ export default defineComponent({
     //     inputType: 'text'
     //   }
     // ]
-
-    
-
     return {
       state,
       el,
-      changeBoardInform
+      changeBoardInform,
     }
+  },
+  created() {
+    this.state.totalPage = Number(this.$route.params.totalPage)
   },
   methods: {
     movePageToHome() {
@@ -131,12 +140,22 @@ export default defineComponent({
     width: 700px;
     border: none;
   }
-  .wirteBoardButton {
-    float: right;
+  .wirteBoardButton, .backToHomeButton, .fixBoardButton, .deleteBoardButton, .backToHomeListButton{
+    margin-left: 10px;
+    margin-top: 100px;
+    margin-bottom: 0;
   }
   .ul, li {
     text-decoration: none;
     list-style: none;
   }
-  
+  .boardDetailView {
+    width: 80%;
+    border: 1px solid #E1E1E1;
+    border-collapse: collapse;
+    margin-left: 150px;
+  }
+  .button {
+    margin-left:140px;
+  }
 </style>

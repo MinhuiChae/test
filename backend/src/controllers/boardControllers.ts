@@ -69,7 +69,12 @@ class BoardController {
   postBoard() {
     const reqBoard: BoardReqModel = new BoardReqModel(this.req.body as IBoardInform)
     const paramsId: number = Number(this.req.params.id);
-    const bbsSeq: number = boardList.length + 1;
+    let bbsSeq: number = 0;
+    if(boardList.length === 0) {
+      bbsSeq = 1;
+    } else {
+      bbsSeq = boardList[boardList.length-1].bbsSeq + 1;
+    }
     const board: BoardResModel = new BoardResModel(bbsSeq, paramsId ,reqBoard);
 
     if(board.isValidation()) {
@@ -119,7 +124,12 @@ class BoardController {
   postReply() {
     const paramsSeq: number = Number(this.req.params.bbsSeq);
     const reqReply: ReplyReqModel = new ReplyReqModel(this.req.body as IReplyInform);
-    const replySeq: number = replyList.length + 1;
+    let replySeq: number = 0;
+    if(replyList.length === 0) {
+      replySeq = 1;
+    } else {
+      replySeq = replyList[replyList.length-1].replySeq + 1;
+    }
     const resReply: ReplyResModel = new ReplyResModel(reqReply, paramsSeq, replySeq);
 
     if(resReply.isValidation()) {

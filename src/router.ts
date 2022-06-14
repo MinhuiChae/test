@@ -20,7 +20,7 @@ const routes = [
     props: true
   },
   {
-    path:'/write',
+    path:'/write/:totalPage',
     name:"Write",
     component: () => import('./Board/Write.vue')
   }

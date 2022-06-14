@@ -11,7 +11,7 @@
         <th>Title</th>    
         <th>Id</th>    
       </thead>
-      <tr v-for="board in state.boardList" :key ="board.title" class = "dataList" @click="moveDetailPage(board.bbsSeq, state.pageNo)" >
+      <tr v-for="board in state.boardList" :key ="board.bbsSeq" class = "dataList" @click="moveDetailPage(board.bbsSeq, state.pageNo)" >
         <td>{{ board.bbsSeq }}</td>
         <td>{{ board.title }}</td>
         <td>{{ board.userId }}</td>
@@ -56,7 +56,6 @@ export default defineComponent({
     });
 
     const getBoard = () => axios.get("/api/board/?countPerPage=" + state.countPerPage + "&pageNo="+ state.pageNo + "&sortBy=" + state.sortBy + "&sortDir=" + state.sortDir).then((res: any) => {
-      state.totalPage = res.data.totalPage;
       updateList(res)
     }); 
 
@@ -65,7 +64,10 @@ export default defineComponent({
     });
 
     const updateList = (res: any) => {
+      state.boardList.length = 0;
       state.boardList = res.data.data;
+      state.totalPage = res.data.totalPage;
+      console.log(state.boardList)
     }
 
     const onChangePageNum = (num: number) => {
@@ -79,6 +81,7 @@ export default defineComponent({
     const plusPageNum = () => {
       if(state.pageNo < state.totalPage) {
         state.pageNo++;
+        console.log(state.pageNo);
         getBoard()
       }
     }
@@ -113,7 +116,7 @@ export default defineComponent({
       window.location.href='/detail/' + bbsSeq + "/" + pageNo;
     },
     moveWirtePage() {
-      window.location.href='/write'
+      window.location.href='/write/' + this.state.totalPage;
     }
   },
   created() {
