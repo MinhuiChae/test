@@ -12,6 +12,12 @@ interface IUserInform {
   selectOption?: string[]
 }
 
+interface IBoardInputInform {
+  name: string,
+  value: string,
+  inputType: string
+}
+
 interface IBoardInform {
   title: string,
   content: string
@@ -47,5 +53,6 @@ export {
   ESortDir,
   IBoardInform,
   IReplyInform,
-  IResBoardInform
+  IResBoardInform,
+  IBoardInputInform
 }
