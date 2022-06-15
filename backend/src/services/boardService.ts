@@ -169,6 +169,19 @@ class boardService {
   getReplyList():ReplyResModel[] {
     return this.replyList;
   }
+
+  selectLastSeq(list: any[]) {
+    let seqList:number[] = [0];
+    let seq: number = 0;
+    list.map((board) => {
+      seqList.push(board.bbsSeq)
+    })
+
+    seq = Math.max(...seqList)
+    console.log(seqList)
+    return seq;
+  }
+
 }
 
 export default boardService;

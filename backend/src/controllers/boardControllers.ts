@@ -70,11 +70,11 @@ class BoardController {
     const reqBoard: BoardReqModel = new BoardReqModel(this.req.body as IBoardInform)
     const paramsId: number = Number(this.req.params.id);
     let bbsSeq: number = 0;
-    if(boardList.length === 0) {
-      bbsSeq = 1;
-    } else {
-      bbsSeq = boardList[boardList.length-1].bbsSeq + 1;
-    }
+ 
+    bbsSeq = this.boardService.selectLastSeq(boardList) + 1;
+
+    console.log("bbsSeq", bbsSeq)
+
     const board: BoardResModel = new BoardResModel(bbsSeq, paramsId ,reqBoard);
 
     if(board.isValidation()) {
@@ -125,11 +125,9 @@ class BoardController {
     const paramsSeq: number = Number(this.req.params.bbsSeq);
     const reqReply: ReplyReqModel = new ReplyReqModel(this.req.body as IReplyInform);
     let replySeq: number = 0;
-    if(replyList.length === 0) {
-      replySeq = 1;
-    } else {
-      replySeq = replyList[replyList.length-1].replySeq + 1;
-    }
+
+    replySeq = this.boardService.selectLastSeq(replyList);
+
     const resReply: ReplyResModel = new ReplyResModel(reqReply, paramsSeq, replySeq);
 
     if(resReply.isValidation()) {
