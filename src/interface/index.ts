@@ -34,6 +34,13 @@ interface IReplyInform {
   content: string
 }
 
+interface IResReplyInform {
+  bbsSeq: number,
+  replySeq: number,
+  content: string,
+  userId: number
+}
+
 enum ESortType {
   "Id" = "id",
   "Name" = "name",
@@ -54,5 +61,6 @@ export {
   IBoardInform,
   IReplyInform,
   IResBoardInform,
-  IBoardInputInform
+  IBoardInputInform,
+  IResReplyInform
 }

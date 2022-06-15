@@ -40,7 +40,7 @@ router.put("/api/board/:bbsSeq", (req: express.Request, res: express.Response) =
 router.get("/api/board/:bbsSeq/reply", (req: express.Request, res: express.Response) => {
   new BoardController(req, res).getReplyList();
 });
-router.post("/api/board/:bbsSeq/reply", (req: express.Request, res: express.Response) => {
+router.post("/api/board/:bbsSeq/reply/:id", (req: express.Request, res: express.Response) => {
   new BoardController(req, res).postReply();
 });
 router.delete("/api/board/:bbsSeq/reply/:replySeq", (req: express.Request, res: express.Response) => {

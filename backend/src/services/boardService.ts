@@ -170,11 +170,23 @@ class boardService {
     return this.replyList;
   }
 
-  selectLastSeq(list: any[]) {
+  selectLastBbsSeq(list: any[]) {
     let seqList:number[] = [0];
     let seq: number = 0;
     list.map((board) => {
       seqList.push(board.bbsSeq)
+    })
+
+    seq = Math.max(...seqList)
+    console.log(seqList)
+    return seq;
+  }
+
+  selectLastReplySeq(list: any[]) {
+    let seqList:number[] = [0];
+    let seq: number = 0;
+    list.map((reply) => {
+      seqList.push(reply.replySeq)
     })
 
     seq = Math.max(...seqList)

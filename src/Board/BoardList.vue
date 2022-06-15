@@ -44,7 +44,7 @@
 
 <script lang="ts">
 import {reactive, defineComponent, onMounted} from 'vue';
-import { IResBoardInform, IUserData } from "@/interface";
+import { IResBoardInform} from "@/interface";
 import axios from 'axios';
 export { default as detailPage } from './DetailBoard.vue'; 
 export default defineComponent({
@@ -52,11 +52,10 @@ export default defineComponent({
   setup() {
     const state = reactive({
       boardList: [] as IResBoardInform[],
-      userLilst: [] as IUserData[],
       countPerPage: 5,
       pageNo: 1,
       sortBy: 'bbsSeq',
-      sortDir: 'asc',
+      sortDir: 'desc',
       totalPage: 0,
       bbsSeq:0,
       isVisitedDetailVue:false
@@ -65,10 +64,6 @@ export default defineComponent({
     const getBoard = () => axios.get("/api/board/?countPerPage=" + state.countPerPage + "&pageNo="+ state.pageNo + "&sortBy=" + state.sortBy + "&sortDir=" + state.sortDir).then((res: any) => {
       updateList(res)
     }); 
-
-    const getUser = () => axios.get("/api/user").then((res: any) => {
-      state.userLilst = res.data.data as IUserData[];
-    });
 
     const updateList = (res: any) => {
       state.boardList.length = 0;
@@ -106,8 +101,7 @@ export default defineComponent({
     //   }); 
     // }
     onMounted(() => {
-      getBoard(),
-      getUser()
+      getBoard()
     })
     return {
       state,

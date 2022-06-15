@@ -10,13 +10,13 @@ const routes = [
   {
     path:'/:pageNo/:isVisitedDetailVue',
     name:"List",
-    component: () => import('./Board/Board.vue'),
+    component: () => import('./Board/BoardList.vue'),
     props: true
   },
   {
     path:'/',
     name:"Index",
-    component: () => import('./Board/Board.vue'),
+    component: () => import('./Board/BoardList.vue'),
     props: true
   },
   {

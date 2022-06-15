@@ -1,11 +1,12 @@
 <template>
-  <div class="button">
-    <button class="wirteBoardButton" @click.stop = "changeBoardInform" v-if="state.post">글쓰기</button>
+<div class="write">
+  <div class="buttons">
+    <button class="backToHomeListButton" @click.stop = "changeBoardInform" v-if="state.post">글쓰기</button>
     <button class="wirteBoardButton" @click.stop = "changeBoardInform" v-if="state.update">수정</button>
     <button class="backToHomeListButton" @click.stop = "movePageToHome" >리스트</button>
   </div>
-  <div>
-    <form ref = 'el' class="boardDetailView">
+
+    <form ref = 'el' class="boardDetailViews">
       <ul>
         <li class="Write">제목</li>
       </ul>
@@ -19,15 +20,17 @@
         <li><input type="text" class="inputWriteContent" name="content" :value="state.Data.content"></li>
       </ul>
     </form>
-  </div>
+
+</div>
+  
 
 </template>
 
 <script lang="ts">
-import {reactive, defineComponent, ref} from 'vue';
+import {reactive, defineComponent, ref, onMounted} from 'vue';
 import useObject from '@/composition/useObject';
 import { THTMLElement } from '@/types';
-import { IBoardInform , IResBoardInform} from "@/interface";
+import { IBoardInform , IResBoardInform, IUserData} from "@/interface";
 import axios from 'axios';
 export default defineComponent({
    //eslint-disable-next-line
@@ -47,27 +50,47 @@ export default defineComponent({
     };
 
     const state = reactive({
-      userId: 3,
+      userId: 2,
       Data: boardInform as IBoardInform,
       resData: boardData as IResBoardInform,
+      userList: [] as IUserData[],
       totalPage: 0,
       bbsSeq:0,
       update: false,
       post: false,
       curPage:0,
-      curPerPage:0,
-      boardListLength:0,
-      newCurPage:0
     })
+
+    const getUser = () => axios.get("/api/user").then((res: any) => {
+      updateUserList(res);
+    });
+
+    const updateUserList = (res: any) => {
+      state.userList = res.data.data as IUserData[];
+    }
+
+    const updateBoardList = (res: any) => {
+      state.resData = res.data.data as IResBoardInform;
+    }
+
+    const isValidUser = (): boolean => {
+      let boolean: boolean = false;
+      state.userList.map((userList) => {
+        if(userList.id === state.userId) {
+          boolean =  true;
+        } 
+      })
+
+      return boolean;
+    }
 
     const postBoard = () =>  axios.post("/api/board/" + state.userId, {
       title: state.Data.title,
       content: state.Data.content,
     }).then((res: any) => {
-      state.resData = res.data.data as IResBoardInform;
-      console.log(res.data.data)
-      makeNewCurPage();
-      window.location.href="/detail/" + state.resData.bbsSeq + "/" + state.newCurPage
+      updateBoardList(res);
+      moveToDetailPage(1);
+      state.post = false;
       alert(res.data.msg);
     }).catch((res:any) => alert(res.data.msg));
 
@@ -75,20 +98,14 @@ export default defineComponent({
       title: state.Data.title,
       content: state.Data.content,
     }).then((res: any) => {
-      
-      state.resData = res.data.data as IResBoardInform;
-      console.log(res.data.data)
-      window.location.href="/detail/" + state.resData.bbsSeq + "/" + state.curPage;
+      state.update = false;
+      updateBoardList(res);
+      moveToDetailPage(state.curPage);
       alert(res.data.msg);
     }).catch((res:any) => alert(res.data.msg));
 
-    const makeNewCurPage = () => {
-      console.log(state.boardListLength, state.curPerPage)
-      if(state.boardListLength+1 <= state.curPerPage) {
-        state.newCurPage = state.totalPage;
-      } else {
-        state.newCurPage = state.totalPage + 1;
-      }
+    const moveToDetailPage = (page: number) => {
+      window.location.href="/detail/" + state.resData.bbsSeq + "/" + page;
     }
 
     const el = ref<HTMLFormElement>();
@@ -98,7 +115,6 @@ export default defineComponent({
 
     const changeBoardInform = () => {
       const elements = el.value?.elements;
-      console.log(el)
       if(elements) {
         [...elements].forEach(element => {
           const key = element.getAttribute("name");
@@ -113,11 +129,13 @@ export default defineComponent({
       if(checkFormList.length === 0) {
         state.Data = changeIBoardData;
         if(state.post) {
-          postBoard();
-          state.post = false;
+          if(isValidUser()) {
+            postBoard();
+          } else {
+            alert("회원이 아닙니다.")
+          }
         } else {
           updateBoard();
-          state.update = false;
         }
       } else {
         alert(checkFormList + '를 확인하세요')
@@ -145,6 +163,9 @@ export default defineComponent({
     //     inputType: 'text'
     //   }
     // ]
+    onMounted(() => {
+      getUser()
+    })
     return {
       state,
       el,
@@ -153,9 +174,6 @@ export default defineComponent({
     }
   },
   created() {
-    this.state.boardListLength = Number(this.$route.params.boardListLength);
-    this.state.curPerPage = Number(this.$route.params.curPerPage);
-    this.state.totalPage = Number(this.$route.params.totalPage);
     this.state.update = Boolean(this.$route.params.update)
     this.state.post = Boolean(this.$route.params.post);
     this.state.bbsSeq = Number(this.$route.params.bbsSeq);
@@ -189,21 +207,21 @@ export default defineComponent({
     border: none;
   }
   .wirteBoardButton, .backToHomeButton, .fixBoardButton, .deleteBoardButton, .backToHomeListButton{
-    margin-left: 10px;
-    margin-top: 100px;
-    margin-bottom: 0;
+    margin-right: 10px;
+    display: inline-block;
   }
   .ul, li {
     text-decoration: none;
     list-style: none;
   }
-  .boardDetailView {
-    width: 80%;
+  .boardDetailViews {
+    margin-top: 50px;
     border: 1px solid #E1E1E1;
     border-collapse: collapse;
-    margin-left: 150px;
   }
-  .button {
-    margin-left:140px;
+  .write {
+    width: 80%;
+    margin-left: 150px;
+    margin-top: 70px;
   }
 </style>

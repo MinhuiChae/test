@@ -14,9 +14,17 @@ interface IReplyInform {
   content: string
 }
 
+interface IResReplyInform {
+  bbsSeq: number,
+  replySeq: number,
+  content: string
+}
+
+
 export {
   IInformReq,
   IBoardInform,
-  IReplyInform
+  IReplyInform,
+  IResReplyInform
   
 } ;

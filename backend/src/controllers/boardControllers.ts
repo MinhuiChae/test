@@ -1,5 +1,5 @@
 import express from "express";
-import { IBoardInform, IReplyInform } from "../interface";
+import { IBoardInform, IReplyInform, IResReplyInform } from "../interface";
 import BoardResModel from "../model/boardResModel";
 import BoardReqModel from "../model/boardReqModel";
 import ReplyReqModel from "../model/replyReqModel";
@@ -71,7 +71,7 @@ class BoardController {
     const paramsId: number = Number(this.req.params.id);
     let bbsSeq: number = 0;
  
-    bbsSeq = this.boardService.selectLastSeq(boardList) + 1;
+    bbsSeq = this.boardService.selectLastBbsSeq(boardList) + 1;
 
     console.log("bbsSeq", bbsSeq)
 
@@ -123,12 +123,13 @@ class BoardController {
 
   postReply() {
     const paramsSeq: number = Number(this.req.params.bbsSeq);
+    const paramsId: number = Number(this.req.params.id);
     const reqReply: ReplyReqModel = new ReplyReqModel(this.req.body as IReplyInform);
     let replySeq: number = 0;
 
-    replySeq = this.boardService.selectLastSeq(replyList);
+    replySeq = this.boardService.selectLastReplySeq(replyList) + 1;
 
-    const resReply: ReplyResModel = new ReplyResModel(reqReply, paramsSeq, replySeq);
+    const resReply: ReplyResModel = new ReplyResModel(reqReply, paramsSeq, replySeq, paramsId);
 
     if(resReply.isValidation()) {
       if(this.boardService.findBoardIndex(paramsSeq) !== -1) {
