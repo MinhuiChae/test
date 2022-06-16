@@ -163,13 +163,16 @@ class BoardController {
     const paramsBbsSeq: number = Number(this.req.params.bbsSeq);
     const paramsReplySeq: number = Number(this.req.params.replySeq);
     const reqReply: ReplyReqModel = new ReplyReqModel(this.req.body as IReplyInform);
+    const ownreplyList:ReplyResModel[]  = [];
     if(reqReply.isValidation()) {
-      if(this.boardService.findReplyByReplySeq(paramsBbsSeq) !== undefined) {
+      if(this.boardService.findReplyByReplySeq(paramsReplySeq) !== undefined) {
+        console.log(this.boardService.findReplyByReplySeq(paramsReplySeq))
         if(this.boardService.findReplyIndex(paramsReplySeq) !== -1) {
           let reply = this.boardService.findReplyByReplySeq(paramsReplySeq);
           if(reply)
           this.boardService.updateReply(reply, reqReply);
-          this.boardResponse.response(EStatusCode.SUCCESS, ResponseMessage.SUCCESS, this.boardService.getReplyList())
+          this.boardService.addReplyAtOwnBoard(ownreplyList, paramsBbsSeq)
+          this.boardResponse.response(EStatusCode.SUCCESS, ResponseMessage.SUCCESS, ownreplyList)
         } else {
           this.boardResponse.response(EStatusCode.NOTFOUND, ResponseMessage.NOT_FOUNT_REPLYSEQ, []);
         }

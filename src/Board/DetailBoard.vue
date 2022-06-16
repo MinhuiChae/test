@@ -10,23 +10,25 @@
       content:state.board.content, 
       pageNo: state.pageNo, 
       bbsSeq: state.bbsSeq,
-      update: true
+      update: true,
+      userId: state.userId,
+      isValidUser: state.isValidUser,
     }}">
-    <button class="backToHomeButton">수정</button>
+    <button class="backToHomeButton" v-if="state.isWriter">수정</button>
     </router-link>
-    <button @click="deleteBoard" class="backToHomeButton">삭제</button>
+    <button @click="deleteBoard" class="backToHomeButton" v-if="state.isWriter">삭제</button>
     </div>
   </div>
-  <table class="boardDetailView">
-    <tr>
-      <td class="userId">작성자</td>
-      <td class="stateUserId">{{state.board.userId}}</td>
-    </tr>
-    <tr>
-      <td class="content">내용</td>
-      <td class="stateContent"> {{state.board.content}}</td>
-    </tr>
-  </table>
+    <table class="boardDetailView" ref = 'el'>
+      <tr>
+        <td class="userId">작성자</td>
+        <td class="stateUserId" id="stateUserId">{{state.board.userId}}</td>
+      </tr>
+      <tr>
+        <td class="content">내용</td>
+        <td class="stateContent"> {{state.board.content}}</td>
+      </tr>
+    </table>
 
 <!--댓글-->
   <div class="reply">
@@ -46,11 +48,11 @@
     </div>
     
     <div v-for="reply in state.replyList" :key="reply.replySeq">
-      <p class="replyUserId"> 작성자:{{ reply.userId }}, 번호:{{ reply.replySeq }} </p>
+      <p class="replyUserId"> 작성자:{{ reply.userId }}, 번호:{{ reply.replySeq }}</p>
       <p class="replyBtnC">
-        <button class="replyUpdate" @click.stop="getUpdateReplyInform(reply.replySeq)" v-if="state.isClickUpdateReplyButton !== reply.replySeq">수정</button>
-        <button class="replyUpdate" @click.stop="updateReplyInform" v-if="state.isClickUpdateReplyButton === reply.replySeq">확인</button>
-        <button class="replyDelete" @click.stop="deleteReplyInform(reply.replySeq)">삭제</button>
+        <button class="replyUpdate" @click.stop="getUpdateReplyInform(reply.replySeq)" v-if="state.isClickUpdateReplyButton !== reply.replySeq && appearButton(reply.replySeq)">수정</button>
+        <button class="replyUpdate" @click.stop="updateReplyInform(reply.userId)" v-if="state.isClickUpdateReplyButton === reply.replySeq && appearButton(reply.replySeq)">확인</button>
+        <button class="replyDelete" @click.stop="deleteReplyInform(reply.replySeq)" v-if="appearButton(reply.replySeq)">삭제</button>
       </p>
       <input type="text" class="replyContent" :value="reply.content" readonly v-if="state.isClickUpdateReplyButton !== reply.replySeq">
       <input type="text" class="replyContent" :value="reply.content" id="replyUpdateContent" v-if="state.isClickUpdateReplyButton === reply.replySeq">
@@ -83,7 +85,7 @@ export default defineComponent({
     }
 
     const state = reactive({
-      userId: 1,
+      userId: 0,
       bbsSeq: 0,
       board: boardData  as IResBoardInform,
       replyList: [] as IResReplyInform[],
@@ -93,7 +95,11 @@ export default defineComponent({
       isClickReplyButton: false,
       clickReplyButtonNum: 0,
       isClickUpdateReplyButton: 0,
-      replySeq:0
+      replySeq:0,
+      isValidUser: '',
+      isWriter: false,
+      isReplyWriter: false,
+      myReplyList: [] as number[],
     })
 
     const isClickReplyButton = () => {
@@ -107,6 +113,7 @@ export default defineComponent({
 
     const getBoard = () => axios.get("/api/board/" + state.bbsSeq).then((res: any) => {
       state.board = res.data.data as IResBoardInform;
+      isWriter();
     });
 
     const deleteBoard = () => axios.delete("/api/board/" + state.bbsSeq).then((res: any) => {
@@ -116,6 +123,8 @@ export default defineComponent({
 
     const getReplyList = () => axios.get("/api/board/" + state.bbsSeq + "/reply").then((res: any) => {
       state.replyList = res.data.data as IResReplyInform[];
+      isReplyWriter();
+      console.log("state.myReplyList", state.myReplyList)
     });
 
     const postReply = () => axios.post("/api/board/" + state.bbsSeq + "/reply/" + state.userId, {
@@ -131,8 +140,7 @@ export default defineComponent({
     const updateReply = () => axios.put("/api/board/" + state.bbsSeq + "/reply/" + state.replySeq, {
       content: state.Data.content
     }).then((res: any) => {
-      console.log(1)
-      getReplyList();
+      state.replyList = res.data.data as IResReplyInform[];
       state.isClickUpdateReplyButton = 0;
       state.Data.content = '';
       alert(res.data.msg);
@@ -143,29 +151,38 @@ export default defineComponent({
       if(!replyValue) {
         alert("댓글을 입력하십시오")
       } else {
-          if(state.isClickReplyButton) {
-            state.Data.content = replyValue;
-            postReply();
-          } 
+          if(state.isValidUser === 'true') {
+            if(state.isClickReplyButton) {
+              state.Data.content = replyValue;
+              postReply();
+            } 
+          } else {
+            alert("회원이 아닙니다.")
+          }
         }
     }
 
     const getUpdateReplyInform = (replynum: number) => {
       state.isClickUpdateReplyButton = replynum;
       state.replySeq = replynum;
-      console.log(state.replySeq)
-      console.log(state.bbsSeq)
     }
 
-    const updateReplyInform = () => {
+    const updateReplyInform = (userId: number) => {
       const replyUpdateValue = (document.getElementById("replyUpdateContent") as HTMLInputElement).value;
       if(!replyUpdateValue) {
         alert("댓글을 입력하십시오")
       } else {
-        if(state.isClickUpdateReplyButton !== 0 && replyUpdateValue) {
-            state.Data.content = replyUpdateValue;
-            updateReply();
+        if(state.isValidUser === 'true') {
+          if( userId === state.userId) {
+            state.isWriter = true;
+            if(state.isClickUpdateReplyButton !== 0 && replyUpdateValue) {
+              state.Data.content = replyUpdateValue;
+              updateReply();
+            }
           }
+        } else {
+          alert("회원이 아닙니다.")
+        }
       }
     }
 
@@ -179,6 +196,34 @@ export default defineComponent({
     const deleteReplyInform = (replySeq: number) => {
       state.replySeq = replySeq;
       deleteReply()
+    }
+
+    const isWriter = () => {
+      console.log(state.userId)
+      if(state.board.userId === state.userId) {
+        state.isWriter = true;
+      } else {
+        state.isWriter = false;
+      }
+    }
+
+    const isReplyWriter = () => {
+      console.log(state.replyList)
+      state.replyList.map((reply )=> {
+        if(reply.userId === state.userId) {
+          state.myReplyList.push(reply.replySeq)
+        } 
+      })
+    }
+
+    const appearButton = (seq:number): boolean => {
+      console.log(seq)
+      console.log(state.myReplyList)
+      if(state.myReplyList.find((mySeq) => mySeq === seq)) {
+        return true;
+      } else {
+        return false;
+      }
     }
 
     onMounted(() => {
@@ -195,12 +240,16 @@ export default defineComponent({
       changeReplyInform,
       updateReplyInform,
       getUpdateReplyInform,
-      deleteReplyInform
+      deleteReplyInform,
+      appearButton
     }
   },
   created() {
-    this.state.bbsSeq = Number(this.$route.params.bbsSeq)
-    this.state.pageNo = Number(this.$route.params.pageNo)
+    this.state.bbsSeq = Number(this.$route.params.bbsSeq);
+    this.state.pageNo = Number(this.$route.params.pageNo);
+    this.state.userId = Number(this.$route.params.userId);
+    this.state.isValidUser = String(this.$route.params.isValidUser);
+    console.log(this.state.isValidUser)
   },
   methods: {
     movePageToList(pageNo: number, isVisitedDetailVue:boolean) {

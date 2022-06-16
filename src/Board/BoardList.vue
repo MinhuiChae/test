@@ -1,5 +1,4 @@
 <template>
-
     <div class="boardTitle">BoardList</div>
     <div class="buttonDiv">
     <router-link :to="{ name: 'Write', params: { 
@@ -7,6 +6,8 @@
       curPerPage: state.countPerPage,
       boardListLength: state.boardList.length,
       post: true,
+      isValidUser: state.isValidUser,
+      userId: state.userId
     }}">
     <button class="backToHomeButton">글쓰기</button>
     </router-link>
@@ -18,16 +19,11 @@
         <th>Title</th>    
         <th>Id</th>    
       </thead>
-      <tr v-for="board in state.boardList" :key ="board.bbsSeq" class = "dataList" @click="moveDetailPage(board.bbsSeq, state.pageNo)" >
+      <tr v-for="board in state.boardList" :key ="board.bbsSeq" class = "dataList" @click="moveDetailPage(board.bbsSeq)" >
         <td>{{ board.bbsSeq }}</td>
         <td>{{ board.title }}</td>
         <td>{{ board.userId }}</td>
       </tr>
-       <!-- <tr v-for="board in state.userLilst" :key ="board.id" class = "dataList">
-        <td>{{ board.id }}</td>
-        <td>{{ board.name }}</td>
-        <td>{{ board.age }}</td>
-      </tr> -->
     </table>
   </div>
 
@@ -44,7 +40,7 @@
 
 <script lang="ts">
 import {reactive, defineComponent, onMounted} from 'vue';
-import { IResBoardInform} from "@/interface";
+import { IResBoardInform, IUserData} from "@/interface";
 import axios from 'axios';
 export { default as detailPage } from './DetailBoard.vue'; 
 export default defineComponent({
@@ -52,18 +48,38 @@ export default defineComponent({
   setup() {
     const state = reactive({
       boardList: [] as IResBoardInform[],
+      userId: 5,
       countPerPage: 5,
       pageNo: 1,
       sortBy: 'bbsSeq',
       sortDir: 'desc',
       totalPage: 0,
       bbsSeq:0,
-      isVisitedDetailVue:false
+      isVisitedDetailVue:false,
+      userList: [] as IUserData[],
+      isValidUser: false,
     });
 
     const getBoard = () => axios.get("/api/board/?countPerPage=" + state.countPerPage + "&pageNo="+ state.pageNo + "&sortBy=" + state.sortBy + "&sortDir=" + state.sortDir).then((res: any) => {
       updateList(res)
     }); 
+
+    const getUser = () => axios.get("/api/user").then((res: any) => {
+      updateUserList(res);
+      isValidUser();
+    });
+
+    const updateUserList = (res: any) => {
+      state.userList = res.data.data as IUserData[];
+    }
+
+    const isValidUser = () => {
+      if(state.userList.find((user)=> user.id === state.userId)) {
+        state.isValidUser = true;
+      } else {
+        state.isValidUser = false;
+      }
+    }
 
     const updateList = (res: any) => {
       state.boardList.length = 0;
@@ -93,27 +109,22 @@ export default defineComponent({
         getBoard()
       }
     }
-    // const showBoardDeatilApi = (num: number) => {
-    //   state.bbsSeq = num;
-    //   console.log(state.bbsSeq)
-    //   axios.get("/api/board/" + state.bbsSeq).then((res: any) => {
-    //     console.log(res.data)
-    //   }); 
-    // }
+
     onMounted(() => {
-      getBoard()
+      getBoard(),
+      getUser()
     })
     return {
       state,
       onChangePageNum,
       plusPageNum,
       MinusPageNum,
-      // showBoardDeatilApi,
+      isValidUser
     }
   },
   methods: {
-    moveDetailPage(bbsSeq: number, pageNo: number) {
-      window.location.href='/detail/' + bbsSeq + "/" + pageNo;
+    moveDetailPage(bbsSeq: number) {
+      window.location.href='/detail/' + bbsSeq + "/" + this.state.pageNo + "/" + this.state.userId + "/" + this.state.isValidUser;
     }
   },
   created() {

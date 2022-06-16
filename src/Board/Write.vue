@@ -27,10 +27,10 @@
 </template>
 
 <script lang="ts">
-import {reactive, defineComponent, ref, onMounted} from 'vue';
+import {reactive, defineComponent, ref} from 'vue';
 import useObject from '@/composition/useObject';
 import { THTMLElement } from '@/types';
-import { IBoardInform , IResBoardInform, IUserData} from "@/interface";
+import { IBoardInform , IResBoardInform} from "@/interface";
 import axios from 'axios';
 export default defineComponent({
    //eslint-disable-next-line
@@ -50,39 +50,19 @@ export default defineComponent({
     };
 
     const state = reactive({
-      userId: 2,
+      userId: 0,
       Data: boardInform as IBoardInform,
       resData: boardData as IResBoardInform,
-      userList: [] as IUserData[],
       totalPage: 0,
       bbsSeq:0,
       update: false,
       post: false,
       curPage:0,
+      isValidUser: '',
     })
-
-    const getUser = () => axios.get("/api/user").then((res: any) => {
-      updateUserList(res);
-    });
-
-    const updateUserList = (res: any) => {
-      state.userList = res.data.data as IUserData[];
-    }
-
     const updateBoardList = (res: any) => {
       state.resData = res.data.data as IResBoardInform;
     }
-
-    // const isValidUser = (): boolean => {
-    //   let boolean: boolean = false;
-    //   state.userList.map((userList) => {
-    //     if(userList.id === state.userId) {
-    //       boolean =  true;
-    //     } 
-    //   })
-
-    //   return boolean;
-    // }
 
     const postBoard = () =>  axios.post("/api/board/" + state.userId, {
       title: state.Data.title,
@@ -105,7 +85,7 @@ export default defineComponent({
     }).catch((res:any) => alert(res.data.msg));
 
     const moveToDetailPage = (page: number) => {
-      window.location.href="/detail/" + state.resData.bbsSeq + "/" + page;
+      window.location.href="/detail/" + state.resData.bbsSeq + "/" + page + "/" + state.userId + "/" + state.isValidUser;
     }
 
     const el = ref<HTMLFormElement>();
@@ -115,6 +95,7 @@ export default defineComponent({
 
     const changeBoardInform = () => {
       const elements = el.value?.elements;
+      console.log(elements)
       if(elements) {
         [...elements].forEach(element => {
           const key = element.getAttribute("name");
@@ -122,18 +103,17 @@ export default defineComponent({
           if(key) {
             isValidInform(key, value);
           }
-          console.log(key, value)
         })
       }
 
       if(checkFormList.length === 0) {
         state.Data = changeIBoardData;
         if(state.post) {
-          // if(isValidUser()) {
+          if(state.isValidUser === 'true') {
             postBoard();
-          // } else {
-          //   alert("회원이 아닙니다.")
-          // }
+          } else {
+            alert("회원이 아닙니다.")
+          }
         } else {
           updateBoard();
         }
@@ -163,9 +143,6 @@ export default defineComponent({
     //     inputType: 'text'
     //   }
     // ]
-    onMounted(() => {
-      getUser()
-    })
     return {
       state,
       el,
@@ -174,15 +151,17 @@ export default defineComponent({
     }
   },
   created() {
-    this.state.update = Boolean(this.$route.params.update)
+    this.state.update = Boolean(this.$route.params.update);
     this.state.post = Boolean(this.$route.params.post);
     this.state.bbsSeq = Number(this.$route.params.bbsSeq);
+    this.state.userId = Number(this.$route.params.userId);
+    console.log(this.state.userId)
+    this.state.isValidUser = String(this.$route.params.isValidUser);
       if(this.state.update) {
         this.state.curPage = Number(this.$route.params.pageNo);
         this.state.Data.title = String(this.$route.params.title);
         this.state.Data.content = String(this.$route.params.content);
       }
-    
   },
   methods: {
     movePageToHome() {
