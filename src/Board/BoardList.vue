@@ -15,9 +15,9 @@
     <div class = "container">
     <table class = "userListTable">
       <thead>
-        <th>No</th>
-        <th>Title</th>    
-        <th>Id</th>    
+        <th class="boardListSeq">No (↑)</th>
+        <th class="boardListTitle">Title</th>    
+        <th class="boardListUserId">Id</th>    
       </thead>
       <tr v-for="board in state.boardList" :key ="board.bbsSeq" class = "dataList" @click="moveDetailPage(board.bbsSeq)" >
         <td>{{ board.bbsSeq }}</td>
@@ -48,7 +48,7 @@ export default defineComponent({
   setup() {
     const state = reactive({
       boardList: [] as IResBoardInform[],
-      userId: 5,
+      userId: 2,
       countPerPage: 5,
       pageNo: 1,
       sortBy: 'bbsSeq',
@@ -141,6 +141,15 @@ export default defineComponent({
     margin-top:60px;
     margin-right: 20px;
     float: right;
+  }
+  .boardListSeq {
+    width: 30%;
+  }
+  .boardListTitle {
+    width: 40%;
+  }
+  .boardListUserId {
+    width: 30%;
   }
 
 </style>
