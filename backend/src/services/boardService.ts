@@ -138,7 +138,7 @@ class boardService {
   }
 
   findReplyIndex(replySeq: number): number {
-    const index = this.replyList.findIndex((replyModel) => replyModel.bbsSeq === replySeq);
+    const index = this.replyList.findIndex((replyModel) => replyModel.replySeq === replySeq);
     return index;
   }
 
@@ -178,7 +178,6 @@ class boardService {
     })
 
     seq = Math.max(...seqList)
-    console.log(seqList)
     return seq;
   }
 
@@ -190,7 +189,6 @@ class boardService {
     })
 
     seq = Math.max(...seqList)
-    console.log(seqList)
     return seq;
   }
 

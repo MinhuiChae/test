@@ -73,8 +73,6 @@ class BoardController {
  
     bbsSeq = this.boardService.selectLastBbsSeq(boardList) + 1;
 
-    console.log("bbsSeq", bbsSeq)
-
     const board: BoardResModel = new BoardResModel(bbsSeq, paramsId ,reqBoard);
 
     if(board.isValidation()) {
@@ -146,10 +144,12 @@ class BoardController {
   deleteReply() {
     const paramsBbsSeq: number = Number(this.req.params.bbsSeq);
     const paramsReplySeq: number = Number(this.req.params.replySeq);
+    const ownreplyList:ReplyResModel[]  = [];
+    this.boardService.addReplyAtOwnBoard(ownreplyList, paramsBbsSeq)
     if(this.boardService.findBoardByBbsSeq(paramsBbsSeq) !== undefined) {
-      if(this.boardService.findReplyIndex(paramsBbsSeq) !== -1) {
+      if(this.boardService.findReplyIndex(paramsReplySeq) !== -1) {
         this.boardService.deleteReply(paramsReplySeq);
-        this.boardResponse.response(EStatusCode.SUCCESS, ResponseMessage.SUCCESS, this.boardService.getReplyList())
+        this.boardResponse.response(EStatusCode.SUCCESS, ResponseMessage.SUCCESS, ownreplyList)
       } else {
         this.boardResponse.response(EStatusCode.NOTFOUND, ResponseMessage.NOT_FOUNT_REPLYSEQ, [])
       }
@@ -164,7 +164,7 @@ class BoardController {
     const paramsReplySeq: number = Number(this.req.params.replySeq);
     const reqReply: ReplyReqModel = new ReplyReqModel(this.req.body as IReplyInform);
     if(reqReply.isValidation()) {
-      if(this.boardService.findBoardByBbsSeq(paramsBbsSeq) !== undefined) {
+      if(this.boardService.findReplyByReplySeq(paramsBbsSeq) !== undefined) {
         if(this.boardService.findReplyIndex(paramsReplySeq) !== -1) {
           let reply = this.boardService.findReplyByReplySeq(paramsReplySeq);
           if(reply)

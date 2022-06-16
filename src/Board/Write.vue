@@ -73,16 +73,16 @@ export default defineComponent({
       state.resData = res.data.data as IResBoardInform;
     }
 
-    const isValidUser = (): boolean => {
-      let boolean: boolean = false;
-      state.userList.map((userList) => {
-        if(userList.id === state.userId) {
-          boolean =  true;
-        } 
-      })
+    // const isValidUser = (): boolean => {
+    //   let boolean: boolean = false;
+    //   state.userList.map((userList) => {
+    //     if(userList.id === state.userId) {
+    //       boolean =  true;
+    //     } 
+    //   })
 
-      return boolean;
-    }
+    //   return boolean;
+    // }
 
     const postBoard = () =>  axios.post("/api/board/" + state.userId, {
       title: state.Data.title,
@@ -129,11 +129,11 @@ export default defineComponent({
       if(checkFormList.length === 0) {
         state.Data = changeIBoardData;
         if(state.post) {
-          if(isValidUser()) {
+          // if(isValidUser()) {
             postBoard();
-          } else {
-            alert("회원이 아닙니다.")
-          }
+          // } else {
+          //   alert("회원이 아닙니다.")
+          // }
         } else {
           updateBoard();
         }

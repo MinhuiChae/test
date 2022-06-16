@@ -46,10 +46,14 @@
     </div>
     
     <div v-for="reply in state.replyList" :key="reply.replySeq">
-      <p class="replyUserId"> {{ reply.userId }} </p>
-      <div class="replyContent">
-        {{ reply.content }}
-      </div>
+      <p class="replyUserId"> 작성자:{{ reply.userId }}, 번호:{{ reply.replySeq }} </p>
+      <p class="replyBtnC">
+        <button class="replyUpdate" @click.stop="getUpdateReplyInform(reply.replySeq)" v-if="state.isClickUpdateReplyButton !== reply.replySeq">수정</button>
+        <button class="replyUpdate" @click.stop="updateReplyInform" v-if="state.isClickUpdateReplyButton === reply.replySeq">확인</button>
+        <button class="replyDelete" @click.stop="deleteReplyInform(reply.replySeq)">삭제</button>
+      </p>
+      <input type="text" class="replyContent" :value="reply.content" readonly v-if="state.isClickUpdateReplyButton !== reply.replySeq">
+      <input type="text" class="replyContent" :value="reply.content" id="replyUpdateContent" v-if="state.isClickUpdateReplyButton === reply.replySeq">
     </div>
   </div>
 </template>
@@ -87,7 +91,9 @@ export default defineComponent({
       pageNo: 0,
       isVisitedDetailVue: true,
       isClickReplyButton: false,
-      clickReplyButtonNum: 0
+      clickReplyButtonNum: 0,
+      isClickUpdateReplyButton: 0,
+      replySeq:0
     })
 
     const isClickReplyButton = () => {
@@ -122,16 +128,58 @@ export default defineComponent({
       alert(res.data.msg);
     }).catch((res:any) => alert(res.data.msg));
 
+    const updateReply = () => axios.put("/api/board/" + state.bbsSeq + "/reply/" + state.replySeq, {
+      content: state.Data.content
+    }).then((res: any) => {
+      console.log(1)
+      getReplyList();
+      state.isClickUpdateReplyButton = 0;
+      state.Data.content = '';
+      alert(res.data.msg);
+    }).catch((res:any) => alert(res.data.msg));
+
     const changeReplyInform = () => {
-      const value = (document.getElementById("replyContent") as HTMLInputElement).value;
-      if(!value) {
+      const replyValue = (document.getElementById("replyContent") as HTMLInputElement).value;
+      if(!replyValue) {
         alert("댓글을 입력하십시오")
       } else {
-        state.Data.content = value;
-        postReply();
+          if(state.isClickReplyButton) {
+            state.Data.content = replyValue;
+            postReply();
+          } 
+        }
+    }
+
+    const getUpdateReplyInform = (replynum: number) => {
+      state.isClickUpdateReplyButton = replynum;
+      state.replySeq = replynum;
+      console.log(state.replySeq)
+      console.log(state.bbsSeq)
+    }
+
+    const updateReplyInform = () => {
+      const replyUpdateValue = (document.getElementById("replyUpdateContent") as HTMLInputElement).value;
+      if(!replyUpdateValue) {
+        alert("댓글을 입력하십시오")
+      } else {
+        if(state.isClickUpdateReplyButton !== 0 && replyUpdateValue) {
+            state.Data.content = replyUpdateValue;
+            updateReply();
+          }
       }
     }
 
+    const deleteReply = () => axios.delete("/api/board/" + state.bbsSeq + "/reply/" + state.replySeq)
+    .then((res: any) => {
+      alert(res.data.msg);
+      getReplyList();
+    }).catch((res:any) => alert(res.data.msg));
+
+
+    const deleteReplyInform = (replySeq: number) => {
+      state.replySeq = replySeq;
+      deleteReply()
+    }
 
     onMounted(() => {
       getBoard(),
@@ -144,7 +192,10 @@ export default defineComponent({
       deleteBoard,
       postReply,
       isClickReplyButton,
-      changeReplyInform
+      changeReplyInform,
+      updateReplyInform,
+      getUpdateReplyInform,
+      deleteReplyInform
     }
   },
   created() {
@@ -194,12 +245,18 @@ export default defineComponent({
   border-radius: 0.5em;
   height: 35px;
   border:1px solid gray;
+  width: 85%;
 }
 .replyUserId {
   margin-left: 5px;
   margin-bottom: 0;
 }
-.replyLength, .replyButton, .WriteReplyButton {
+.replyBtnC {
+  float: right;
+  margin-bottom: 20px;
+  margin-top:8px;
+}
+.replyLength, .replyButton, .WriteReplyButton, .replyBtnC, .replyContent {
   display: inline-block;
 }
 .replyButton {
@@ -222,5 +279,11 @@ export default defineComponent({
   border:1px solid gray;
   width:90%;
 }
-
+.replyUpdate, .replyDelete {
+  margin-bottom: 8px;
+  margin-left: 3px;
+  width: 50px;
+  height: 30px;
+  margin-top:0
+}
 </style>
