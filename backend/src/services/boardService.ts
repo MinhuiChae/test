@@ -26,13 +26,15 @@ const sortAsDesc = <K extends keyof IBoardInform>(userDatas: IBoardInform[], key
     return 0; 
 })}
 
+const copiedData: BbsModel[] = [];
+
 class boardService {
   boardList: BbsModel[] = [];
   replyList: ReplyResModel[] = [];
   boardPageList: BbsModel[] = [];
   dir: ESortDir = ESortDir.ASC;
   sortType: string = '';
- 
+  
   constructor(boardList: BbsModel[], replyList: ReplyResModel[]) {
     this.boardList = boardList;
     this.replyList = replyList;
@@ -81,6 +83,7 @@ class boardService {
   sortBoardList(sortType: string, sortDir: ESortDir) {
     this.sortType = sortType;
     this.dir = sortDir;
+
     if(sortDir === 'asc') {
       Object.values(this.boardList).map(a => {
         Object.keys(a).find((key) => {
@@ -97,7 +100,10 @@ class boardService {
           }
         })
       })
-    } 
+    } else if(sortDir === 'origin') {
+      this.boardList.length = 0;
+      copiedData.forEach((a: BbsModel) => this.boardList.push(a))
+    }
     return this.boardList;
   }
 
@@ -113,6 +119,7 @@ class boardService {
 
   postBoard(board: BbsModel): void {
     this.boardList.push(board);
+    copiedData.push(board);
   }
 
   getPageCount(pageSize: number): number {
