@@ -66,17 +66,12 @@ class boardService {
   }
 
   getCountInform(countPerPage:any, pageNo:any):void {
-    if(countPerPage === undefined || typeof countPerPage === "undefined" || countPerPage === null) {
-      countPerPage = 10;
-    } else {
-      if(countPerPage)
-      countPerPage = parseInt(countPerPage);
+    if(countPerPage === undefined || typeof countPerPage === "undefined" || countPerPage === null) countPerPage = 10; 
+    else {
+      if(countPerPage) countPerPage = parseInt(countPerPage);
     }
-    if(pageNo === undefined || typeof pageNo === "undefined" || pageNo === null) {
-      pageNo = 0;
-    } else {
-      pageNo = parseInt(pageNo);
-    }
+    if(pageNo === undefined || typeof pageNo === "undefined" || pageNo === null) pageNo = 0; 
+    else pageNo = parseInt(pageNo);
   }
 
   doSortAsAsc(sortType: string) {
@@ -103,7 +98,6 @@ class boardService {
     this.boardList.length = 0;
     copiedData.forEach((a: BbsModel) => this.boardList.push(a));
   }
-
 
   sortBoardList(sortType: string, sortDir: ESortDir) {
     this.sortType = sortType;

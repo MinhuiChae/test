@@ -18,7 +18,7 @@
     <table class = "userListTable">
       <th v-for="board in boardListTitle" :key ="board.name" :class="board.class" @click.stop="sort(board.name)">
         {{ board.title }} 
-        <p class="sorting" v-if="decideSortItem(board.name)">{{ state.sortIcon }}</p>
+        <p class="sorting" v-if="decideSortItem(board.name)">{{ getSortIcon }}</p>
       </th> 
       <tr v-for="board in state.boardList" :key ="board.bbsSeq" class = "dataList" @click="moveDetailPage(board.bbsSeq)" >
         <td>{{ board.bbsSeq }}</td>
@@ -41,15 +41,19 @@
 
 <script lang="ts">
 import {reactive, defineComponent, onMounted, computed} from 'vue';
-import { IResBoardInform, IUserData, ESortDir, EBoardSortType, IBoardInputInform} from "@/interface";
+import { IResBoardInform, IUserData, ESortDir, IBoardInputInform} from "@/interface";
 import axios from 'axios';
+import { useRoute } from 'vue-router';
+
 export { default as detailPage } from './DetailBoard.vue'; 
 export default defineComponent({
   name: 'Board-detail',
   setup() {
+
+    const route = useRoute();
     const state = reactive({
       boardList: [] as IResBoardInform[],
-      userId: 2,
+      userId: 3,
       countPerPage: 5,
       pageNo: 1,
       sortBy: 'bbsSeq',
@@ -84,88 +88,55 @@ export default defineComponent({
       }
     ]
 
-    const getBoard = () => axios.get("/api/board/?countPerPage=" + state.countPerPage + "&pageNo="+ state.pageNo + "&sortBy=" + state.sortBy + "&sortDir=" + state.sortDir).then((res: any) => {
-      decideSortIcon(state.sortDir);
-      changeDirInform();
-      updateList(res);
-    }); 
-
-    const changeDirInform = () => {
-      getDirInfomFromDetailPage(ESortDir.ASC, 1);
-      getDirInfomFromDetailPage(ESortDir.DESC, 2);
-    }
-
-    const getDirInfomFromDetailPage = (sortDir: ESortDir, num: number) => {
-      if(state.sortDir === sortDir) {
-        switch(state.sortBy) {
-          case EBoardSortType.BBSSEQ:
-            state.sortBbsSeqCnt = num;
-            break;
-          case EBoardSortType.TITLE:
-            state.sortTitleCnt = num;
-            break;
-          case EBoardSortType.USERID:
-            state.sortUserIdCnt = num;
-            break;
-        }
+    const getBoard = () => {
+      try{        
+        const url = "/api/board/?countPerPage=" + state.countPerPage + "&pageNo="+ state.pageNo + "&sortBy=" + state.sortBy + "&sortDir=" + state.sortDir;
+        axios.get(url).then((res: any) => {
+          // changeDirInform();
+          updateList(res);
+        }); 
+      } catch(err) {
+        console.error(err);
       }
     }
-
-    const decideDirByCnt = (sortNum: number, num:number) => {
-      switch(sortNum % num) {
-        case 1:
-          state.sortDir = ESortDir.ASC;
-          break;
-        case 2:
-          state.sortDir = ESortDir.DESC;
-          break;
-        case 0:
-          state.sortDir = ESortDir.ORIGIN;
-          break;
-      }
-    }
+    
 
     const decideSortItem = (sortBy: string): boolean => {
-      if(state.sortBy === sortBy) {
-        return true;
-      } else {
-        return false;
-      }
+      return state.sortBy === sortBy ? true : false;
     }
 
-    const decideSortIcon = (Dir: string) => {
-      switch(Dir) {
+    const getSortIcon = computed(() => {
+      let iconStr = '(-)';
+      switch(state.sortDir) {
         case ESortDir.ASC:
-          state.sortIcon = '(↑)';
+          iconStr = '(↑)';
           break;
         case ESortDir.DESC:
-          state.sortIcon = '(↓)';
-          break;
-        case ESortDir.ORIGIN:
-          state.sortIcon = '(-)';
+          iconStr = '(↓)';
           break;
       }
-    }
+      return iconStr;
+    });
+        
 
     const sort = (sortBy: string) => {
-      state.sortBy = sortBy;
-      switch(state.sortBy) {
-        case EBoardSortType.BBSSEQ:
-          state.sortBbsSeqCnt++;
-          decideDirByCnt(state.sortBbsSeqCnt, 3);
-          break;
-        case EBoardSortType.TITLE:
-          state.sortTitleCnt++;
-          decideDirByCnt(state.sortTitleCnt, 3);
-          break;
-        case EBoardSortType.USERID:
-          state.sortUserIdCnt++;
-          decideDirByCnt(state.sortUserIdCnt, 3);
-          break;
+      if (state.sortBy === sortBy) {
+        if (state.sortDir === ESortDir.ORIGIN) {
+          state.sortDir = ESortDir.ASC;
+        } else if (state.sortDir === ESortDir.ASC) {
+          state.sortDir = ESortDir.DESC;
+        } else {
+          state.sortDir = ESortDir.ORIGIN;
+        }
+      } else {
+        state.sortDir = ESortDir.ORIGIN;
       }
-      
+
+      state.sortBy = sortBy;
       getBoard();
     }
+
+    // 위에 처럼 변경
 
     const getUser = () => axios.get("/api/user").then((res: any) => {
       updateUserList(res);
@@ -177,71 +148,65 @@ export default defineComponent({
     }
 
     const isValidUser = () => {
-      if(state.userList.find((user)=> user.id === state.userId)) {
-        state.isValidUser = true;
-      } else {
-        state.isValidUser = false;
-      }
+      state.isValidUser = state.userList.find((user)=> user.id === state.userId) === undefined ? false : true;
     }
+
 
     const updateList = (res: any) => {
       state.boardList.length = 0;
       state.boardList = res.data.data;
-      state.totalPage = res.data.totalPage;
-      if(state.totalPage === 0) {
-        state.totalPage = 1;
-      }
-    }
-
-    const onChangePageNum = (num: number) => {
-      if(state.pageNo > 0 && state.pageNo <= state.totalPage) {
-        const changePageNum = state.pageNo + num;
-        state.pageNo = changePageNum;
-        getBoard()
-      }
+      state.totalPage = res.data.totalPage === 0 ? 1 : res.data.totalPage;
     }
 
     const plusPageNum = () => {
-      if(state.pageNo < state.totalPage) {
-        state.pageNo++;
-        getBoard()
-      }
+      state.pageNo < state.totalPage ? state.pageNo ++ : state.pageNo
+      getBoard()
     }
 
     const MinusPageNum = () => {
-      if(state.pageNo > 1) {
-        state.pageNo--
-        getBoard()
-      }
+      state.pageNo > 1 ? state.pageNo -- : state.pageNo
+      getBoard();
     }
 
+    // 3 항 연산자
     const isActiveNextButton = (num: number):boolean => {
-      if(num >= state.totalPage ) {
-        return false;
-      } else {
-        return true;
-      }
+      return num >= state.totalPage ? false : true;
     }
-
+    
+    // 한줄로
     const isActivePrevButton = (num: number):boolean => {
-      if(num <= 1) {
-        return false;
-      } else {
-        return true;
-      }
+      return num <= 1 ? false : true;
     }
 
     const canPrevPage = computed(() => isActivePrevButton(state.pageNo));
     const canNextPage = computed(() => isActiveNextButton(state.pageNo));
 
+    const initRouteParam = () => {
+      if (route.params.isVisitedDetailVue) {
+        state.pageNo = Number(route.params.pageNo);
+        state.sortBy = String(route.params.sortBy);
+        state.sortDir = String(route.params.sortDir);
+      }
+    }
+
+    const moveDetailPage = (bbsSeq: number) => {
+      // `` 처리하게 변경
+      window.location.href='/detail/' + bbsSeq + "/" + state.pageNo + "/" + state.userId + "/" + state.isValidUser + "/" + state.sortBy + "/" + state.sortDir;
+    }
+
+    const moveHomePage = () => {
+      window.location.href='/';
+    }
+    
     onMounted(() => {
+      initRouteParam();
       getBoard(),
-      getUser()
+      getUser();
     })
+
 
     return {
       state,
-      onChangePageNum,
       plusPageNum,
       MinusPageNum,
       isValidUser,
@@ -249,24 +214,16 @@ export default defineComponent({
       decideSortItem,
       canPrevPage,
       canNextPage,
-      boardListTitle
-    }
-  },
-  methods: {
-    moveDetailPage(bbsSeq: number) {
-      window.location.href='/detail/' + bbsSeq + "/" + this.state.pageNo + "/" + this.state.userId + "/" + this.state.isValidUser + "/" + this.state.sortBy + "/" + this.state.sortDir;
-    },
-    moveHomePage() {
-      window.location.href='/'
+      boardListTitle,
+      moveDetailPage,
+      moveHomePage,
+      getSortIcon
     }
   },
   created() {
-    this.state.isVisitedDetailVue = Boolean(this.$route.params.isVisitedDetailVue);
-    if(this.state.isVisitedDetailVue === true) {
-      this.state.pageNo = Number(this.$route.params.pageNo);
-      this.state.sortBy = String(this.$route.params.sortBy);
-      this.state.sortDir = String(this.$route.params.sortDir);
-    }
+    // alert(this.$route.params.isVisitedDetailVue);
+    // this.state.isVisitedDetailVue = Boolean(this.$route.params.isVisitedDetailVue);
+    
   },
 })
 </script>

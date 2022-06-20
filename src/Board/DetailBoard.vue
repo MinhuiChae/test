@@ -50,7 +50,7 @@
     </div>
     
     <div v-for="reply in state.replyList" :key="reply.replySeq">
-      <p class="replyUserId"> 작성자:{{ reply.userId }}, 번호:{{ reply.replySeq }}</p>
+      <p class="replyUserId"> 작성자: {{ reply.userId }}</p>
       <p class="replyBtnC">
         <button class="replyUpdate" @click.stop="getUpdateReplyInform(reply.replySeq)" v-if="state.isClickUpdateReplyButton !== reply.replySeq && isReplyWriter(reply.replySeq)">수정</button>
         <button class="replyUpdate" @click.stop="updateReplyInform(reply.userId)" v-if="state.isClickUpdateReplyButton === reply.replySeq && isReplyWriter(reply.replySeq)">확인</button>
@@ -107,12 +107,7 @@ export default defineComponent({
     })
 
     const isClickReplyButton = () => {
-      state.clickReplyButtonNum ++;
-      if(state.clickReplyButtonNum % 2 === 1) {
-        state.isClickReplyButton = true;
-      } else {
-        state.isClickReplyButton = false;
-      }
+      state.isClickReplyButton = !state.isClickReplyButton;
     }
 
     const getBoard = () => axios.get("/api/board/" + state.bbsSeq).then((res: any) => {
@@ -130,8 +125,12 @@ export default defineComponent({
 
     const deleteBoard = () => axios.delete("/api/board/" + state.bbsSeq).then((res: any) => {
       alert(res.data.msg)
-      window.location.href = "/" + state.sortBy + "/" + state.sortDir
+      movePageToListAfterDelete();
     });
+
+    const movePageToListAfterDelete = () => {
+      window.location.href = "/" + state.sortBy + "/" + state.sortDir
+    };
 
     const getReplyList = () => axios.get("/api/board/" + state.bbsSeq + "/reply").then((res: any) => {
       updateReplyList(res);
@@ -164,7 +163,6 @@ export default defineComponent({
       changeUpdateReplyInform();
       alert(res.data.msg);
     }).catch((res:any) => alert(res.data.msg));
-
     
     const getUpdateReplyInform = (replynum: number) => {
       state.isClickUpdateReplyButton = replynum;
@@ -203,14 +201,9 @@ export default defineComponent({
         alert("댓글을 입력하십시오")
       } else {
         if(state.isValidUser === 'true') {
-          if(states === 'update' && userId) {
-            updating(reply, userId)
-          } else {
-            posting(reply);
-          }
-        } else {
-          alert("회원이 아닙니다.")
-        }
+          if(states === 'update' && userId) updating(reply, userId)
+          else posting(reply);
+        } else alert("회원이 아닙니다.");
       }
     }
 
@@ -220,18 +213,13 @@ export default defineComponent({
       getReplyList();
     }).catch((res:any) => alert(res.data.msg));
 
-
     const deleteReplyInform = (replySeq: number) => {
       state.replySeq = replySeq;
       deleteReply()
     }
 
     const isBoardWriter = () => {
-      if(state.board.userId === state.userId) {
-        state.isWriter = true;
-      } else {
-        state.isWriter = false;
-      }
+      state.isWriter = state.board.userId === state.userId ? true : false;
     }
 
     const setReplyAtOwnReplyList = () => {
@@ -243,11 +231,7 @@ export default defineComponent({
     }
 
     const isReplyWriter = (seq:number): boolean => {
-      if(state.myReplyList.find((mySeq) => mySeq === seq)) {
-        return true;
-      } else {
-        return false;
-      }
+      return state.myReplyList.find((mySeq) => mySeq === seq) === undefined ? false : true;
     }
 
     onMounted(() => {
