@@ -33,7 +33,6 @@ class BoardController {
   constructor(req: express.Request, res: express.Response) {
     this.req = req;
     this.res = res;
-
     this.boardResponse = new BoardResponse(this.res);
     this.boardService = new BoardService(boardList, replyList)
   }
@@ -70,9 +69,7 @@ class BoardController {
     const reqBoard: BoardReqModel = new BoardReqModel(this.req.body as IBoardInform)
     const paramsId: number = Number(this.req.params.id);
     let bbsSeq: number = 0;
- 
     bbsSeq = this.boardService.selectLastBbsSeq(boardList) + 1;
-
     const board: BoardResModel = new BoardResModel(bbsSeq, paramsId ,reqBoard);
 
     if(board.isValidation()) {
@@ -91,7 +88,6 @@ class BoardController {
     } else {
       this.boardResponse.response(EStatusCode.NOTFOUND, ResponseMessage.NOT_FOUNT_BBSSEQ, [])
     }
-   
   }
 
   updateBoard() {
@@ -124,11 +120,8 @@ class BoardController {
     const paramsId: number = Number(this.req.params.id);
     const reqReply: ReplyReqModel = new ReplyReqModel(this.req.body as IReplyInform);
     let replySeq: number = 0;
-
     replySeq = this.boardService.selectLastReplySeq(replyList) + 1;
-
     const resReply: ReplyResModel = new ReplyResModel(reqReply, paramsSeq, replySeq, paramsId);
-
     if(resReply.isValidation()) {
       if(this.boardService.findBoardIndex(paramsSeq) !== -1) {
         this.boardService.postReply(resReply);
@@ -145,18 +138,17 @@ class BoardController {
     const paramsBbsSeq: number = Number(this.req.params.bbsSeq);
     const paramsReplySeq: number = Number(this.req.params.replySeq);
     const ownreplyList:ReplyResModel[]  = [];
-    this.boardService.addReplyAtOwnBoard(ownreplyList, paramsBbsSeq)
+    this.boardService.addReplyAtOwnBoard(ownreplyList, paramsBbsSeq);
     if(this.boardService.findBoardByBbsSeq(paramsBbsSeq) !== undefined) {
       if(this.boardService.findReplyIndex(paramsReplySeq) !== -1) {
         this.boardService.deleteReply(paramsReplySeq);
-        this.boardResponse.response(EStatusCode.SUCCESS, ResponseMessage.SUCCESS, ownreplyList)
+        this.boardResponse.response(EStatusCode.SUCCESS, ResponseMessage.SUCCESS, ownreplyList);
       } else {
-        this.boardResponse.response(EStatusCode.NOTFOUND, ResponseMessage.NOT_FOUNT_REPLYSEQ, [])
+        this.boardResponse.response(EStatusCode.NOTFOUND, ResponseMessage.NOT_FOUNT_REPLYSEQ, []);
       }
     } else {
-      this.boardResponse.response(EStatusCode.NOTFOUND, ResponseMessage.NOT_FOUNT_BBSSEQ, [])
+      this.boardResponse.response(EStatusCode.NOTFOUND, ResponseMessage.NOT_FOUNT_BBSSEQ, []);
     }
-    
   }
 
   updateReply() {
@@ -166,13 +158,12 @@ class BoardController {
     const ownreplyList:ReplyResModel[]  = [];
     if(reqReply.isValidation()) {
       if(this.boardService.findReplyByReplySeq(paramsReplySeq) !== undefined) {
-        console.log(this.boardService.findReplyByReplySeq(paramsReplySeq))
         if(this.boardService.findReplyIndex(paramsReplySeq) !== -1) {
           let reply = this.boardService.findReplyByReplySeq(paramsReplySeq);
           if(reply)
           this.boardService.updateReply(reply, reqReply);
-          this.boardService.addReplyAtOwnBoard(ownreplyList, paramsBbsSeq)
-          this.boardResponse.response(EStatusCode.SUCCESS, ResponseMessage.SUCCESS, ownreplyList)
+          this.boardService.addReplyAtOwnBoard(ownreplyList, paramsBbsSeq);
+          this.boardResponse.response(EStatusCode.SUCCESS, ResponseMessage.SUCCESS, ownreplyList);
         } else {
           this.boardResponse.response(EStatusCode.NOTFOUND, ResponseMessage.NOT_FOUNT_REPLYSEQ, []);
         }

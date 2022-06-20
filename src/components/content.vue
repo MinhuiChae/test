@@ -11,17 +11,6 @@
           </select>
         </li>
       </ul>
-      <!-- <table class="userInputTable">
-        <tr v-for ="input in inputList" :key = "input.name">
-          <td >
-            {{ input.name }} 
-            <input :type = "input.inputType" :name="input.name" :value="input.value" v-if="input.inputType !== 'select'" class="inputBox"> 
-            <select :name="input.name" :value="input.value" v-if="input.inputType === 'select'" class="selectBox">
-              <option v-for="selectOption in input.selectOption" :key="selectOption"> {{ selectOption }} </option>
-            </select>
-          </td>
-        </tr>
-      </table> -->
     </form>  
     <div> 
       <button class="changeInformBtn" @click.stop="changeUserInform" > {{ getButtonName }} </button>

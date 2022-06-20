@@ -13,7 +13,7 @@ div {
   transition: all 0.5s ease;
   color:#000;
   &:hover {
-    color:#fff;
+    color:black;
     cursor: pointer;
   }
 }
@@ -166,6 +166,7 @@ table th, .dataList td {
   text-align: center;
   font-size: 2em;
   margin-top: 60px;
+  cursor: pointer;
 }
 .buttonDiv {
   margin-right: 140px;

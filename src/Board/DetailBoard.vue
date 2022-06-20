@@ -7,22 +7,24 @@
     <button @click="movePageToHome()" class="backToHomeButton">Home</button>
     <router-link :to="{ name: 'Write', params: { 
       title: state.board.title, 
-      content:state.board.content, 
+      content: state.board.content, 
       pageNo: state.pageNo, 
       bbsSeq: state.bbsSeq,
       update: true,
       userId: state.userId,
       isValidUser: state.isValidUser,
+      sortBy: state.sortBy,
+      sortDir: state.sortDir
     }}">
     <button class="backToHomeButton" v-if="state.isWriter">수정</button>
     </router-link>
     <button @click="deleteBoard" class="backToHomeButton" v-if="state.isWriter">삭제</button>
     </div>
   </div>
-    <table class="boardDetailView" ref = 'el'>
+    <table class="boardDetailView">
       <tr>
         <td class="userId">작성자</td>
-        <td class="stateUserId" id="stateUserId">{{state.board.userId}}</td>
+        <td class="stateUserId">{{state.board.userId}}</td>
       </tr>
       <tr>
         <td class="content">내용</td>
@@ -32,7 +34,7 @@
 
 <!--댓글-->
   <div class="reply">
-    <p class="replyLength">댓글 ({{ state.replyList.length }})</p>
+    <p class="replyCnt">댓글 ({{ state.replyList.length }})</p>
     <p class="replyButton">
       <button @click.stop="isClickReplyButton">댓글쓰기</button>
     </p>
@@ -43,16 +45,16 @@
       <p> 작성자: {{ state.userId }}</p>
       <div class="writeReplyBox">
         <input type="text" class="writeReplyInputBox" :value="state.Data.content" id="replyContent">
-        <button class="WriteReplyButton" @click.stop="changeReplyInform">확인</button>
+        <button class="writeReplyButton" @click.stop="postReplyInform">확인</button>
       </div>
     </div>
     
     <div v-for="reply in state.replyList" :key="reply.replySeq">
       <p class="replyUserId"> 작성자:{{ reply.userId }}, 번호:{{ reply.replySeq }}</p>
       <p class="replyBtnC">
-        <button class="replyUpdate" @click.stop="getUpdateReplyInform(reply.replySeq)" v-if="state.isClickUpdateReplyButton !== reply.replySeq && appearButton(reply.replySeq)">수정</button>
-        <button class="replyUpdate" @click.stop="updateReplyInform(reply.userId)" v-if="state.isClickUpdateReplyButton === reply.replySeq && appearButton(reply.replySeq)">확인</button>
-        <button class="replyDelete" @click.stop="deleteReplyInform(reply.replySeq)" v-if="appearButton(reply.replySeq)">삭제</button>
+        <button class="replyUpdate" @click.stop="getUpdateReplyInform(reply.replySeq)" v-if="state.isClickUpdateReplyButton !== reply.replySeq && isReplyWriter(reply.replySeq)">수정</button>
+        <button class="replyUpdate" @click.stop="updateReplyInform(reply.userId)" v-if="state.isClickUpdateReplyButton === reply.replySeq && isReplyWriter(reply.replySeq)">확인</button>
+        <button class="replyDelete" @click.stop="deleteReplyInform(reply.replySeq)" v-if="isReplyWriter(reply.replySeq)">삭제</button>
       </p>
       <input type="text" class="replyContent" :value="reply.content" readonly v-if="state.isClickUpdateReplyButton !== reply.replySeq">
       <input type="text" class="replyContent" :value="reply.content" id="replyUpdateContent" v-if="state.isClickUpdateReplyButton === reply.replySeq">
@@ -100,6 +102,8 @@ export default defineComponent({
       isWriter: false,
       isReplyWriter: false,
       myReplyList: [] as number[],
+      sortBy: '',
+      sortDir: ''
     })
 
     const isClickReplyButton = () => {
@@ -112,73 +116,97 @@ export default defineComponent({
     }
 
     const getBoard = () => axios.get("/api/board/" + state.bbsSeq).then((res: any) => {
-      state.board = res.data.data as IResBoardInform;
-      isWriter();
+      updateBoardList(res);
+      isBoardWriter();
     });
+
+    const updateBoardList = (res: any) => {
+      state.board = res.data.data as IResBoardInform;
+    }
+
+    const updateReplyList = (res: any) => {
+      state.replyList = res.data.data as IResReplyInform[];
+    }
 
     const deleteBoard = () => axios.delete("/api/board/" + state.bbsSeq).then((res: any) => {
       alert(res.data.msg)
-      window.location.href = "/"
+      window.location.href = "/" + state.sortBy + "/" + state.sortDir
     });
 
     const getReplyList = () => axios.get("/api/board/" + state.bbsSeq + "/reply").then((res: any) => {
-      state.replyList = res.data.data as IResReplyInform[];
-      isReplyWriter();
-      console.log("state.myReplyList", state.myReplyList)
+      updateReplyList(res);
+      setReplyAtOwnReplyList();
     });
+
+    const changePostReplyInform = () => {
+      state.isClickReplyButton = false;
+      state.clickReplyButtonNum = 0;
+      state.Data.content='';
+    }
+
+    const changeUpdateReplyInform = () => {
+      state.isClickUpdateReplyButton = 0;
+      state.Data.content = '';
+    }
 
     const postReply = () => axios.post("/api/board/" + state.bbsSeq + "/reply/" + state.userId, {
       content: state.Data.content
     }).then((res: any) => {
       getReplyList();
-      state.isClickReplyButton = false;
-      state.clickReplyButtonNum = 0;
-      state.Data.content='';
+      changePostReplyInform();
       alert(res.data.msg);
     }).catch((res:any) => alert(res.data.msg));
 
     const updateReply = () => axios.put("/api/board/" + state.bbsSeq + "/reply/" + state.replySeq, {
       content: state.Data.content
     }).then((res: any) => {
-      state.replyList = res.data.data as IResReplyInform[];
-      state.isClickUpdateReplyButton = 0;
-      state.Data.content = '';
+      updateReplyList(res);
+      changeUpdateReplyInform();
       alert(res.data.msg);
     }).catch((res:any) => alert(res.data.msg));
 
-    const changeReplyInform = () => {
-      const replyValue = (document.getElementById("replyContent") as HTMLInputElement).value;
-      if(!replyValue) {
-        alert("댓글을 입력하십시오")
-      } else {
-          if(state.isValidUser === 'true') {
-            if(state.isClickReplyButton) {
-              state.Data.content = replyValue;
-              postReply();
-            } 
-          } else {
-            alert("회원이 아닙니다.")
-          }
-        }
-    }
-
+    
     const getUpdateReplyInform = (replynum: number) => {
       state.isClickUpdateReplyButton = replynum;
       state.replySeq = replynum;
     }
 
+    const postReplyInform = () => {
+      const replyValue = (document.getElementById("replyContent") as HTMLInputElement).value;
+      isValidReplyForm('post', replyValue);
+    }
+
     const updateReplyInform = (userId: number) => {
       const replyUpdateValue = (document.getElementById("replyUpdateContent") as HTMLInputElement).value;
-      if(!replyUpdateValue) {
+      isValidReplyForm('update', replyUpdateValue, userId);
+    }
+
+    const updating = (reply: string, userId: number) => {
+      if(userId === state.userId) {
+        state.isWriter = true;
+        if(state.isClickUpdateReplyButton !== 0 && reply) {
+          state.Data.content = reply;
+          updateReply();
+        }
+      }
+    }
+
+    const posting = (reply: string) => {
+      if(state.isClickReplyButton) {
+        state.Data.content = reply;
+        postReply();
+      } 
+    }
+
+    const isValidReplyForm = (states: string, reply: string, userId?: number) => {
+      if(!reply) {
         alert("댓글을 입력하십시오")
       } else {
         if(state.isValidUser === 'true') {
-          if( userId === state.userId) {
-            state.isWriter = true;
-            if(state.isClickUpdateReplyButton !== 0 && replyUpdateValue) {
-              state.Data.content = replyUpdateValue;
-              updateReply();
-            }
+          if(states === 'update' && userId) {
+            updating(reply, userId)
+          } else {
+            posting(reply);
           }
         } else {
           alert("회원이 아닙니다.")
@@ -198,8 +226,7 @@ export default defineComponent({
       deleteReply()
     }
 
-    const isWriter = () => {
-      console.log(state.userId)
+    const isBoardWriter = () => {
       if(state.board.userId === state.userId) {
         state.isWriter = true;
       } else {
@@ -207,18 +234,15 @@ export default defineComponent({
       }
     }
 
-    const isReplyWriter = () => {
-      console.log(state.replyList)
-      state.replyList.map((reply )=> {
+    const setReplyAtOwnReplyList = () => {
+      state.replyList.map((reply)=> {
         if(reply.userId === state.userId) {
           state.myReplyList.push(reply.replySeq)
         } 
       })
     }
 
-    const appearButton = (seq:number): boolean => {
-      console.log(seq)
-      console.log(state.myReplyList)
+    const isReplyWriter = (seq:number): boolean => {
       if(state.myReplyList.find((mySeq) => mySeq === seq)) {
         return true;
       } else {
@@ -237,23 +261,24 @@ export default defineComponent({
       deleteBoard,
       postReply,
       isClickReplyButton,
-      changeReplyInform,
+      postReplyInform,
       updateReplyInform,
       getUpdateReplyInform,
       deleteReplyInform,
-      appearButton
+      isReplyWriter
     }
   },
   created() {
     this.state.bbsSeq = Number(this.$route.params.bbsSeq);
     this.state.pageNo = Number(this.$route.params.pageNo);
     this.state.userId = Number(this.$route.params.userId);
+    this.state.sortBy = String(this.$route.params.sortBy);
+    this.state.sortDir = String(this.$route.params.sortDir);
     this.state.isValidUser = String(this.$route.params.isValidUser);
-    console.log(this.state.isValidUser)
   },
   methods: {
     movePageToList(pageNo: number, isVisitedDetailVue:boolean) {
-      window.location.href='/' + pageNo + "/" + isVisitedDetailVue;
+      window.location.href='/' + pageNo + "/" + isVisitedDetailVue + "/" + this.state.sortBy + "/" + this.state.sortDir;
     },
     movePageToHome() {
       window.location.href='/'
@@ -305,7 +330,7 @@ export default defineComponent({
   margin-bottom: 20px;
   margin-top:8px;
 }
-.replyLength, .replyButton, .WriteReplyButton, .replyBtnC, .replyContent {
+.replyCnt, .replyButton, .writeReplyButton, .replyBtnC, .replyContent {
   display: inline-block;
 }
 .replyButton {
@@ -315,7 +340,7 @@ export default defineComponent({
   border-bottom: 1px solid lightgray;
   display: inline-block;
 }
-.WriteReplyButton {
+.writeReplyButton {
   margin-top: 7px;
   width: 70px;
   height: 30px;

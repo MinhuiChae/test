@@ -14,8 +14,8 @@ interface IUserInform {
 
 interface IBoardInputInform {
   name: string,
-  value: string,
-  inputType: string
+  title: string,
+  class: string
 }
 
 interface IBoardInform {
@@ -53,6 +53,12 @@ enum ESortDir {
   "ORIGIN" = "origin"
 }
 
+enum EBoardSortType {
+  "BBSSEQ" = "bbsSeq",
+  "TITLE" = "title",
+  "USERID" = "userId",
+}
+
 export {
   IUserData,
   IUserInform,
@@ -62,5 +68,6 @@ export {
   IReplyInform,
   IResBoardInform,
   IBoardInputInform,
-  IResReplyInform
+  IResReplyInform,
+  EBoardSortType
 }

@@ -5,7 +5,6 @@
     <button class="wirteBoardButton" @click.stop = "changeBoardInform" v-if="state.update">수정</button>
     <button class="backToHomeListButton" @click.stop = "movePageToHome" >리스트</button>
   </div>
-
     <form ref = 'el' class="boardDetailViews">
       <ul>
         <li class="Write">제목</li>
@@ -20,10 +19,7 @@
         <li><input type="text" class="inputWriteContent" name="content" :value="state.Data.content"></li>
       </ul>
     </form>
-
 </div>
-  
-
 </template>
 
 <script lang="ts">
@@ -59,33 +55,38 @@ export default defineComponent({
       post: false,
       curPage:0,
       isValidUser: '',
+      sortBy: '',
+      sortDir: '',
     })
+
     const updateBoardList = (res: any) => {
       state.resData = res.data.data as IResBoardInform;
+    }
+
+    const completedPost = (res: any, num: number) => {
+      state.post = false;
+      state.update = false;
+      updateBoardList(res);
+      alert(res.data.msg);
+      moveToDetailPage(num);
     }
 
     const postBoard = () =>  axios.post("/api/board/" + state.userId, {
       title: state.Data.title,
       content: state.Data.content,
     }).then((res: any) => {
-      updateBoardList(res);
-      moveToDetailPage(1);
-      state.post = false;
-      alert(res.data.msg);
+      completedPost(res, 1)
     }).catch((res:any) => alert(res.data.msg));
 
     const updateBoard = () => axios.put("/api/board/" + state.bbsSeq, {
       title: state.Data.title,
       content: state.Data.content,
     }).then((res: any) => {
-      state.update = false;
-      updateBoardList(res);
-      moveToDetailPage(state.curPage);
-      alert(res.data.msg);
+      completedPost(res, state.curPage);
     }).catch((res:any) => alert(res.data.msg));
 
     const moveToDetailPage = (page: number) => {
-      window.location.href="/detail/" + state.resData.bbsSeq + "/" + page + "/" + state.userId + "/" + state.isValidUser;
+      window.location.href="/detail/" + state.resData.bbsSeq + "/" + page + "/" + state.userId + "/" + state.isValidUser + "/" + state.sortBy + "/" + state.sortDir;
     }
 
     const el = ref<HTMLFormElement>();
@@ -95,7 +96,6 @@ export default defineComponent({
 
     const changeBoardInform = () => {
       const elements = el.value?.elements;
-      console.log(elements)
       if(elements) {
         [...elements].forEach(element => {
           const key = element.getAttribute("name");
@@ -131,18 +131,6 @@ export default defineComponent({
       }
     }
 
-    // const inputList:IBoardInputInform[] = [
-    //   {
-    //     name: 'title',
-    //     value: state.Data.title,
-    //     inputType: 'text'
-    //   },
-    //   {
-    //     name: 'content',
-    //     value: state.Data.content,
-    //     inputType: 'text'
-    //   }
-    // ]
     return {
       state,
       el,
@@ -155,7 +143,8 @@ export default defineComponent({
     this.state.post = Boolean(this.$route.params.post);
     this.state.bbsSeq = Number(this.$route.params.bbsSeq);
     this.state.userId = Number(this.$route.params.userId);
-    console.log(this.state.userId)
+    this.state.sortBy = String(this.$route.params.sortBy);
+    this.state.sortDir = String(this.$route.params.sortDir);
     this.state.isValidUser = String(this.$route.params.isValidUser);
       if(this.state.update) {
         this.state.curPage = Number(this.$route.params.pageNo);

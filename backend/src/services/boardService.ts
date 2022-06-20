@@ -11,16 +11,16 @@ const update = <BoardModel , K extends keyof BoardModel>(updateModel: BoardModel
   }
 }
 
-const sortAsAsc = <K extends keyof IBoardInform>(userDatas: IBoardInform[], key: K) => {
-  userDatas.sort((a: IBoardInform, b: IBoardInform) => {
+const sortAsAsc = <K extends keyof IBoardInform>(datas: IBoardInform[], key: K) => {
+  datas.sort((a: IBoardInform, b: IBoardInform) => {
     if(a[key] < b[key]) return -1;
     if(a[key] > b[key]) return 1;
     return 0; 
   });
 }
 
-const sortAsDesc = <K extends keyof IBoardInform>(userDatas: IBoardInform[], key: K) => {
-  userDatas.sort((a: IBoardInform, b: IBoardInform) => {
+const sortAsDesc = <K extends keyof IBoardInform>(datas: IBoardInform[], key: K) => {
+  datas.sort((a: IBoardInform, b: IBoardInform) => {
     if(a[key] > b[key]) return -1;
     if(a[key] < b[key]) return 1;
     return 0; 
@@ -47,7 +47,6 @@ class boardService {
   createBoardPageList(countPerPage:any, pageNo:any): void {
     const startItemNo = ((pageNo -1) * countPerPage);
     let endItemNo = (pageNo * countPerPage) -1;
-
     if(endItemNo > (this.boardList.length -1)) {
       endItemNo = this.boardList.length - 1;
     }
@@ -80,29 +79,44 @@ class boardService {
     }
   }
 
+  doSortAsAsc(sortType: string) {
+    Object.values(this.boardList).map(a => {
+      Object.keys(a).find((key) => {
+        if(key === sortType) {
+          sortAsAsc(this.boardList, key as keyof IBoardInform);
+        }
+      })
+    })
+  }
+
+  doSortAsDesc(sortType: string) {
+    Object.values(this.boardList).map(a => {
+      Object.keys(a).find((key) => {
+        if(key === sortType) {
+          sortAsDesc(this.boardList, key as keyof IBoardInform);
+        }
+      })
+    })
+  }
+
+  doSortAsOrigin() {
+    this.boardList.length = 0;
+    copiedData.forEach((a: BbsModel) => this.boardList.push(a));
+  }
+
+
   sortBoardList(sortType: string, sortDir: ESortDir) {
     this.sortType = sortType;
     this.dir = sortDir;
-
-    if(sortDir === 'asc') {
-      Object.values(this.boardList).map(a => {
-        Object.keys(a).find((key) => {
-          if(key === sortType) {
-            sortAsAsc(this.boardList, key as keyof IBoardInform);
-          }
-        })
-      })
-    } else if(sortDir === 'desc') {
-      Object.values(this.boardList).map(a => {
-        Object.keys(a).find((key) => {
-          if(key === sortType) {
-            sortAsDesc(this.boardList, key as keyof IBoardInform);
-          }
-        })
-      })
-    } else if(sortDir === 'origin') {
-      this.boardList.length = 0;
-      copiedData.forEach((a: BbsModel) => this.boardList.push(a))
+    switch(sortDir) {
+      case 'asc':
+        this.doSortAsAsc(sortType);  
+        break;
+      case 'desc':
+        this.doSortAsDesc(sortType);
+        break;
+      case 'origin':
+        this.doSortAsOrigin();
     }
     return this.boardList;
   }
@@ -116,7 +130,7 @@ class boardService {
     const reply = this.replyList.find((seq) => seq.replySeq === replySeq);
     return reply;
   }
-
+  
   postBoard(board: BbsModel): void {
     this.boardList.push(board);
     copiedData.push(board);
@@ -132,6 +146,7 @@ class boardService {
   deleteBoard(bbsSeq: number): void {
     const boardIndex = this.findBoardIndex(bbsSeq);
     this.boardList.splice(boardIndex, 1);
+    copiedData.splice(boardIndex, 1);
   }
 
   deleteReply(replySeq: number): void{
@@ -180,9 +195,7 @@ class boardService {
   selectLastBbsSeq(list: any[]) {
     let seqList:number[] = [0];
     let seq: number = 0;
-    list.map((board) => {
-      seqList.push(board.bbsSeq)
-    })
+    list.map((board) => seqList.push(board.bbsSeq))
 
     seq = Math.max(...seqList)
     return seq;
@@ -191,9 +204,7 @@ class boardService {
   selectLastReplySeq(list: any[]) {
     let seqList:number[] = [0];
     let seq: number = 0;
-    list.map((reply) => {
-      seqList.push(reply.replySeq)
-    })
+    list.map((reply) => seqList.push(reply.replySeq))
 
     seq = Math.max(...seqList)
     return seq;

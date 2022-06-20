@@ -115,7 +115,7 @@ export default defineComponent({
       sortType: '' as ESortType,
       pageNum: 0,
       pageSize: 4,
-      dir:'asc',
+      dir:'origin',
       sortIdCnt: 0,
       copiedDatas: [] as IUserData[],
       sortNameCnt: 0,
