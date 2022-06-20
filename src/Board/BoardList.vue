@@ -97,23 +97,31 @@ export default defineComponent({
 
     const getDirInfomFromDetailPage = (sortDir: ESortDir, num: number) => {
       if(state.sortDir === sortDir) {
-        if(state.sortBy === EBoardSortType.BBSSEQ) {
-          state.sortBbsSeqCnt = num;
-        } else if(state.sortBy === EBoardSortType.TITLE) {
-          state.sortTitleCnt = num;
-        } else if(state.sortBy === EBoardSortType.USERID) {
-          state.sortUserIdCnt = num;
+        switch(state.sortBy) {
+          case EBoardSortType.BBSSEQ:
+            state.sortBbsSeqCnt = num;
+            break;
+          case EBoardSortType.TITLE:
+            state.sortTitleCnt = num;
+            break;
+          case EBoardSortType.USERID:
+            state.sortUserIdCnt = num;
+            break;
         }
       }
     }
 
     const decideDirByCnt = (sortNum: number, num:number) => {
-      if(sortNum % num === 1) {
-        state.sortDir = ESortDir.ASC
-      } else if(sortNum % num === 2) {
-        state.sortDir = ESortDir.DESC
-      } else if(sortNum % num === 0) {
-        state.sortDir = ESortDir.ORIGIN
+      switch(sortNum % num) {
+        case 1:
+          state.sortDir = ESortDir.ASC;
+          break;
+        case 2:
+          state.sortDir = ESortDir.DESC;
+          break;
+        case 0:
+          state.sortDir = ESortDir.ORIGIN;
+          break;
       }
     }
 
@@ -126,27 +134,36 @@ export default defineComponent({
     }
 
     const decideSortIcon = (Dir: string) => {
-      if(Dir === ESortDir.ASC) {
-        state.sortIcon = '(↑)'
-      } else if(Dir === ESortDir.DESC) {
-        state.sortIcon = '(↓)'
-      } else if(Dir === ESortDir.ORIGIN) {
-        state.sortIcon = '(-)'
+      switch(Dir) {
+        case ESortDir.ASC:
+          state.sortIcon = '(↑)';
+          break;
+        case ESortDir.DESC:
+          state.sortIcon = '(↓)';
+          break;
+        case ESortDir.ORIGIN:
+          state.sortIcon = '(-)';
+          break;
       }
     }
 
     const sort = (sortBy: string) => {
       state.sortBy = sortBy;
-      if(state.sortBy === EBoardSortType.BBSSEQ) {
-        state.sortBbsSeqCnt++;
-        decideDirByCnt(state.sortBbsSeqCnt, 3);
-      } else if(state.sortBy === EBoardSortType.TITLE) {
-        state.sortTitleCnt++;
-        decideDirByCnt(state.sortTitleCnt, 3);
-      } else if(state.sortBy === EBoardSortType.USERID) {
-        state.sortUserIdCnt++;
-        decideDirByCnt(state.sortUserIdCnt, 3);
+      switch(state.sortBy) {
+        case EBoardSortType.BBSSEQ:
+          state.sortBbsSeqCnt++;
+          decideDirByCnt(state.sortBbsSeqCnt, 3);
+          break;
+        case EBoardSortType.TITLE:
+          state.sortTitleCnt++;
+          decideDirByCnt(state.sortTitleCnt, 3);
+          break;
+        case EBoardSortType.USERID:
+          state.sortUserIdCnt++;
+          decideDirByCnt(state.sortUserIdCnt, 3);
+          break;
       }
+      
       getBoard();
     }
 
