@@ -1,5 +1,5 @@
 import express from "express";
-import { IBoardInform, IReplyInform, IResReplyInform } from "../interface";
+import { IBoardInform, IReplyInform, IResInform} from "../interface";
 import BoardResModel from "../model/boardResModel";
 import BoardReqModel from "../model/boardReqModel";
 import ReplyReqModel from "../model/replyReqModel";
@@ -7,7 +7,6 @@ import ReplyResModel from "../model/replyResModel"
 import BoardService from "../services/boardService";
 import { EStatusCode } from "../enum";
 import ResponseMessage from "../common/responseMessage";
-import { ESortType} from "../enum/index"
 
 const boardList: BoardResModel[] = [];
 const replyList: ReplyResModel[] = [];
@@ -19,8 +18,8 @@ class BoardResponse {
     this.res = res;
   }
 
-  response(status: number, msg: string , data: BoardResModel[] | BoardResModel | ReplyResModel[] | ReplyResModel, totalLength?: number, totalPage?: number, pageSize?: number, pageNum?: number, sortBy?: ESortType, sortDir?: string) {
-    this.res.status(status).send({status:status, msg: msg, totalLength: totalLength, totalPage : totalPage, pageSize: pageSize, pageNum: pageNum, sortBy: sortBy, sortDir: sortDir, data: data})
+  response(res:IResInform) {
+    this.res.status(res.status).send(res)
   }
 }
 
@@ -49,19 +48,19 @@ class BoardController {
     if(pageNo > 0) {
       this.boardService.sortBoardList(sortBy, sortDir)
       this.boardService.createBoardPageList(countPerPage, pageNo);
-      this.boardResponse.response(EStatusCode.SUCCESS, ResponseMessage.SUCCESS, this.boardService.getBoardPageList(), this.boardService.getTotalCount(), totalPage, countPerPage, pageNo, sortBy, sortDir);
+      this.boardResponse.response({status:EStatusCode.SUCCESS, msg: ResponseMessage.SUCCESS, data: this.boardService.getBoardPageList(), totalLength : this.boardService.getTotalCount(), totalPage: totalPage, pageSize: countPerPage, pageNum: pageNo, sortBy: sortBy, sortDir: sortDir, replyList: replyList});
     } else {
-      this.boardResponse.response(EStatusCode.SUCCESS, ResponseMessage.SUCCESS, this.boardService.getBoardList(), this.boardService.getTotalCount(), countPerPage, pageNo, sortBy, sortDir);
+      this.boardResponse.response({status: EStatusCode.SUCCESS, msg: ResponseMessage.SUCCESS, data: this.boardService.getBoardList(), totalLength : this.boardService.getTotalCount(), pageSize: countPerPage, pageNum: pageNo, sortBy: sortBy, sortDir: sortDir});
     }
   }
 
   getBoardDetail() {
-    const paramsSeq: number = Number(this.req.params.bbsSeq);
+    const paramsSeq = Number(this.req.params.bbsSeq);
     const board: BoardResModel | undefined = this.boardService.findBoardByBbsSeq(paramsSeq);
     if(board) {
-      this.boardResponse.response(EStatusCode.SUCCESS, ResponseMessage.SUCCESS, board)
+      this.boardResponse.response({status: EStatusCode.SUCCESS, msg: ResponseMessage.SUCCESS, data: board})
     } else {
-      this.boardResponse.response(EStatusCode.NOTFOUND, ResponseMessage.NOT_FOUNT_BBSSEQ, [])
+      this.boardResponse.response({status: EStatusCode.NOTFOUND, msg: ResponseMessage.NOT_FOUNT_BBSSEQ, data: []})
     }
   }
 
@@ -74,9 +73,9 @@ class BoardController {
 
     if(board.isValidation()) {
       this.boardService.postBoard(board);
-      this.boardResponse.response(EStatusCode.SUCCESS, ResponseMessage.SUCCESS, board)
+      this.boardResponse.response({status:EStatusCode.SUCCESS, msg: ResponseMessage.SUCCESS, data: board})
     } else {
-      this.boardResponse.response(EStatusCode.WRONGFORMAT, ResponseMessage.WRONG_FORMAT, []);
+      this.boardResponse.response({status:EStatusCode.WRONGFORMAT, msg: ResponseMessage.WRONG_FORMAT, data: []});
     }
   }
 
@@ -84,9 +83,9 @@ class BoardController {
     const paramsSeq: number = Number(this.req.params.bbsSeq);
     if(this.boardService.findBoardIndex(paramsSeq) !== -1) {
       this.boardService.deleteBoard(paramsSeq);
-      this.boardResponse.response(EStatusCode.SUCCESS, ResponseMessage.SUCCESS, this.boardService.getBoardList())
+      this.boardResponse.response({status:EStatusCode.SUCCESS, msg: ResponseMessage.SUCCESS, data: this.boardService.getBoardList()})
     } else {
-      this.boardResponse.response(EStatusCode.NOTFOUND, ResponseMessage.NOT_FOUNT_BBSSEQ, [])
+      this.boardResponse.response({status:EStatusCode.NOTFOUND, msg: ResponseMessage.NOT_FOUNT_BBSSEQ, data: []})
     }
   }
 
@@ -99,12 +98,12 @@ class BoardController {
       const resBoard: BoardResModel | undefined = this.boardService.findBoardByBbsSeq(bbsSeq);
       if(resBoard) {
         this.boardService.updateBoard(resBoard, board);
-        this.boardResponse.response(EStatusCode.SUCCESS, ResponseMessage.SUCCESS, board)
+        this.boardResponse.response({status:EStatusCode.SUCCESS, msg: ResponseMessage.SUCCESS, data: board})
       } else {
-        this.boardResponse.response(EStatusCode.NOTFOUND, ResponseMessage.NOT_FOUNT_BBSSEQ, []);
+        this.boardResponse.response({status:EStatusCode.NOTFOUND, msg: ResponseMessage.NOT_FOUNT_BBSSEQ, data: []});
       }
     } else {
-      this.boardResponse.response(EStatusCode.WRONGFORMAT, ResponseMessage.WRONG_FORMAT, []);
+      this.boardResponse.response({status:EStatusCode.WRONGFORMAT, msg: ResponseMessage.WRONG_FORMAT, data: []});
     }
   }
 
@@ -112,12 +111,12 @@ class BoardController {
     const paramsSeq: number = Number(this.req.params.bbsSeq);
     const ownreplyList:ReplyResModel[]  = [];
     this.boardService.addReplyAtOwnBoard(ownreplyList, paramsSeq)
-    this.boardResponse.response(EStatusCode.SUCCESS, ResponseMessage.SUCCESS, ownreplyList)
+    this.boardResponse.response({status:EStatusCode.SUCCESS, msg: ResponseMessage.SUCCESS, data: ownreplyList})
   }
 
   postReply() {
     const paramsSeq: number = Number(this.req.params.bbsSeq);
-    const paramsId: number = Number(this.req.params.id);
+    const paramsId: number = Number(this.req.params.id); //
     const reqReply: ReplyReqModel = new ReplyReqModel(this.req.body as IReplyInform);
     let replySeq: number = 0;
     replySeq = this.boardService.selectLastReplySeq(replyList) + 1;
@@ -125,15 +124,16 @@ class BoardController {
     if(resReply.isValidation()) {
       if(this.boardService.findBoardIndex(paramsSeq) !== -1) {
         this.boardService.postReply(resReply);
-        this.boardResponse.response(EStatusCode.SUCCESS, ResponseMessage.SUCCESS, resReply)
+        this.boardResponse.response({status:EStatusCode.SUCCESS, msg: ResponseMessage.SUCCESS, data: resReply})
       } else {
-        this.boardResponse.response(EStatusCode.NOTFOUND, ResponseMessage.NOT_FOUNT_BBSSEQ, [])
+        this.boardResponse.response({status:EStatusCode.NOTFOUND, msg: ResponseMessage.NOT_FOUNT_BBSSEQ, data: []})
       }
     } else {
-      this.boardResponse.response(EStatusCode.WRONGFORMAT, ResponseMessage.WRONG_FORMAT, []);
+      this.boardResponse.response({status:EStatusCode.WRONGFORMAT, msg: ResponseMessage.WRONG_FORMAT, data: []});
     }
   }
 
+  
   deleteReply() {
     const paramsBbsSeq: number = Number(this.req.params.bbsSeq);
     const paramsReplySeq: number = Number(this.req.params.replySeq);
@@ -142,12 +142,12 @@ class BoardController {
     if(this.boardService.findBoardByBbsSeq(paramsBbsSeq) !== undefined) {
       if(this.boardService.findReplyIndex(paramsReplySeq) !== -1) {
         this.boardService.deleteReply(paramsReplySeq);
-        this.boardResponse.response(EStatusCode.SUCCESS, ResponseMessage.SUCCESS, ownreplyList);
+        this.boardResponse.response({status:EStatusCode.SUCCESS, msg: ResponseMessage.SUCCESS, data: ownreplyList});
       } else {
-        this.boardResponse.response(EStatusCode.NOTFOUND, ResponseMessage.NOT_FOUNT_REPLYSEQ, []);
+        this.boardResponse.response({status:EStatusCode.NOTFOUND, msg: ResponseMessage.NOT_FOUNT_REPLYSEQ, data: []});
       }
     } else {
-      this.boardResponse.response(EStatusCode.NOTFOUND, ResponseMessage.NOT_FOUNT_BBSSEQ, []);
+      this.boardResponse.response({status:EStatusCode.NOTFOUND, msg: ResponseMessage.NOT_FOUNT_BBSSEQ, data: []});
     }
   }
 
@@ -163,15 +163,15 @@ class BoardController {
           if(reply)
           this.boardService.updateReply(reply, reqReply);
           this.boardService.addReplyAtOwnBoard(ownreplyList, paramsBbsSeq);
-          this.boardResponse.response(EStatusCode.SUCCESS, ResponseMessage.SUCCESS, ownreplyList);
+          this.boardResponse.response({status:EStatusCode.SUCCESS, msg: ResponseMessage.SUCCESS, data: ownreplyList});
         } else {
-          this.boardResponse.response(EStatusCode.NOTFOUND, ResponseMessage.NOT_FOUNT_REPLYSEQ, []);
+          this.boardResponse.response({status:EStatusCode.NOTFOUND, msg: ResponseMessage.NOT_FOUNT_REPLYSEQ, data: []});
         }
       } else {
-        this.boardResponse.response(EStatusCode.NOTFOUND, ResponseMessage.NOT_FOUNT_BBSSEQ, []);
+        this.boardResponse.response({status:EStatusCode.NOTFOUND, msg: ResponseMessage.NOT_FOUNT_BBSSEQ, data: []});
       }
     } else {
-      this.boardResponse.response(EStatusCode.WRONGFORMAT, ResponseMessage.WRONG_FORMAT, []);
+      this.boardResponse.response({status:EStatusCode.WRONGFORMAT, msg: ResponseMessage.WRONG_FORMAT, data: []});
     }
   }
 }

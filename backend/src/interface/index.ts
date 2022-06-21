@@ -1,3 +1,5 @@
+import { ESortType} from "../enum/index"
+
 interface IInformReq{
   id: number,
   name: string,
@@ -10,6 +12,13 @@ interface IBoardInform {
   content: string
 }
 
+interface IResBoardInform {
+  title: string,
+  content: string,
+  bbsSeq: number,
+  userId: number
+}
+
 interface IReplyInform {
   content: string
 }
@@ -17,7 +26,21 @@ interface IReplyInform {
 interface IResReplyInform {
   bbsSeq: number,
   replySeq: number,
-  content: string
+  content: string,
+  userId: number
+}
+
+interface IResInform {
+  status: number, 
+  msg: string , 
+  data: IResBoardInform[] | IResBoardInform | IResReplyInform[] | IResReplyInform, 
+  totalLength?: number, 
+  totalPage?: number, 
+  pageSize?: number, 
+  pageNum?: number, 
+  sortBy?: ESortType, 
+  sortDir?: string, 
+  replyList?: IResReplyInform[]
 }
 
 
@@ -25,6 +48,6 @@ export {
   IInformReq,
   IBoardInform,
   IReplyInform,
-  IResReplyInform
-  
+  IResReplyInform,
+  IResInform
 } ;

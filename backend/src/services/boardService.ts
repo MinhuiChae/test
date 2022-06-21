@@ -50,6 +50,7 @@ class boardService {
     if(endItemNo > (this.boardList.length -1)) {
       endItemNo = this.boardList.length - 1;
     }
+    [...this.boardList].splice(1,endItemNo);
     if(startItemNo < this.boardList.length) {
       for(let index = startItemNo; index <= endItemNo; index++) {
         this.boardPageList.push(this.boardList[index]);
@@ -77,9 +78,7 @@ class boardService {
   doSortAsAsc(sortType: string) {
     Object.values(this.boardList).map(a => {
       Object.keys(a).find((key) => {
-        if(key === sortType) {
-          sortAsAsc(this.boardList, key as keyof IBoardInform);
-        }
+        if(key === sortType) sortAsAsc(this.boardList, key as keyof IBoardInform);
       })
     })
   }
@@ -87,9 +86,7 @@ class boardService {
   doSortAsDesc(sortType: string) {
     Object.values(this.boardList).map(a => {
       Object.keys(a).find((key) => {
-        if(key === sortType) {
-          sortAsDesc(this.boardList, key as keyof IBoardInform);
-        }
+        if(key === sortType) sortAsDesc(this.boardList, key as keyof IBoardInform);
       })
     })
   }
@@ -172,9 +169,7 @@ class boardService {
 
   addReplyAtOwnBoard(ownList: ReplyResModel[], paramsSeq: number) {
     this.replyList.map((list) => {
-      if(list.bbsSeq === paramsSeq) {
-        ownList.push(list)
-      }
+      if(list.bbsSeq === paramsSeq) ownList.push(list)
     });
   }
 

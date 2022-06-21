@@ -1,9 +1,9 @@
 <template>
 <div class="write">
   <div class="buttons">
-    <button class="backToHomeListButton" @click.stop = "changeBoardInform" v-if="state.post">글쓰기</button>
-    <button class="wirteBoardButton" @click.stop = "changeBoardInform" v-if="state.update">수정</button>
-    <button class="backToHomeListButton" @click.stop = "movePageToHome" >리스트</button>
+    <button class="backToHomeListButton" @click.stop = "onChangeBoardInform" v-if="state.post">글쓰기</button>
+    <button class="wirteBoardButton" @click.stop = "onChangeBoardInform" v-if="state.update">수정</button>
+    <button class="backToHomeListButton" @click.stop = "onMovePageToHome" >리스트</button>
   </div>
     <form ref = 'el' class="boardDetailViews">
       <ul>
@@ -23,16 +23,18 @@
 </template>
 
 <script lang="ts">
-import {reactive, defineComponent, ref} from 'vue';
+import {reactive, defineComponent, ref, onMounted} from 'vue';
 import useObject from '@/composition/useObject';
 import { THTMLElement } from '@/types';
-import { IBoardInform , IResBoardInform} from "@/interface";
+import { IBoardInform , IResBoardInform, IResInform} from "@/interface";
+import { useRoute } from 'vue-router';
 import axios from 'axios';
 export default defineComponent({
    //eslint-disable-next-line
   name: 'Write',
  
   setup() {
+    const route = useRoute();
     const boardInform: IBoardInform = {
       title: '',
       content: ''
@@ -59,34 +61,48 @@ export default defineComponent({
       sortDir: '',
     })
 
-    const updateBoardList = (res: any) => {
-      state.resData = res.data.data as IResBoardInform;
+    const updateBoardList = (res: IResInform) => {
+      state.resData = res.data as IResBoardInform;
     }
 
-    const completedPost = (res: any, num: number) => {
+    const completedWrite = (res: IResInform, num: number) => {
       state.post = false;
       state.update = false;
       updateBoardList(res);
-      alert(res.data.msg);
+      alert(res.msg);
       moveToDetailPage(num);
     }
 
-    const postBoard = () =>  axios.post("/api/board/" + state.userId, {
-      title: state.Data.title,
-      content: state.Data.content,
-    }).then((res: any) => {
-      completedPost(res, 1)
-    }).catch((res:any) => alert(res.data.msg));
+    const postBoard = () => {
+      try{        
+        const url = "/api/board/" + state.userId;
+        axios.post(url, {
+          title: state.Data.title,
+          content: state.Data.content
+        }).then((res: any) => {
+          completedWrite(res.data, 1)
+        }); 
+      } catch(err) {
+        console.error(err);
+      }
+    }
 
-    const updateBoard = () => axios.put("/api/board/" + state.bbsSeq, {
-      title: state.Data.title,
-      content: state.Data.content,
-    }).then((res: any) => {
-      completedPost(res, state.curPage);
-    }).catch((res:any) => alert(res.data.msg));
+    const updateBoard = () => {
+      try{        
+        const url = "/api/board/" + state.bbsSeq;
+        axios.put(url, {
+          title: state.Data.title,
+          content: state.Data.content
+        }).then((res: any) => {
+          completedWrite(res.data, state.curPage);
+        }); 
+      } catch(err) {
+        console.error(err);
+      }
+    }
 
     const moveToDetailPage = (page: number) => {
-      window.location.href="/detail/" + state.resData.bbsSeq + "/" + page + "/" + state.userId + "/" + state.isValidUser + "/" + state.sortBy + "/" + state.sortDir;
+      window.location.href=`/detail/${state.resData.bbsSeq}/${page}/${state.userId}/${state.isValidUser}/${state.sortBy}/${state.sortDir}`;
     }
 
     const el = ref<HTMLFormElement>();
@@ -94,26 +110,21 @@ export default defineComponent({
     const { setProperty, getElementValue } = useObject();
     const checkFormList: string[] = [];
 
-    const changeBoardInform = () => {
+    const onChangeBoardInform = () => {
       const elements = el.value?.elements;
       if(elements) {
         [...elements].forEach(element => {
           const key = element.getAttribute("name");
           let value: string = getElementValue(element as THTMLElement);
-          if(key) {
-            isValidInform(key, value);
-          }
+          if(key) checkValidInform(key, value);
         })
       }
 
       if(checkFormList.length === 0) {
         state.Data = changeIBoardData;
         if(state.post) {
-          if(state.isValidUser === 'true') {
-            postBoard();
-          } else {
-            alert("회원이 아닙니다.")
-          }
+          state.isValidUser === 'true' ? postBoard() : alert("회원이 아닙니다.");
+           postBoard()
         } else {
           updateBoard();
         }
@@ -123,38 +134,39 @@ export default defineComponent({
       checkFormList.length = 0;
     }
 
-    const isValidInform = (key: string, value: any) => {
-      if (!value) {
-        checkFormList.push(key);
-      } else {
-        setProperty(changeIBoardData, key as keyof IBoardInform, value);
+    const checkValidInform = (key: string, value: any) => {
+      !value === true ? checkFormList.push(key) : setProperty(changeIBoardData, key as keyof IBoardInform, value);
+    }
+
+    const onMovePageToHome = () => {
+      window.location.href='/'
+    }
+
+    const initRouteParam = () => {
+      state.update = Boolean(route.params.update);
+      state.post = Boolean(route.params.post);
+      state.bbsSeq = Number(route.params.bbsSeq);
+      state.userId = Number(route.params.userId);
+      state.sortBy = String(route.params.sortBy);
+      state.sortDir = String(route.params.sortDir);
+      state.isValidUser = String(route.params.isValidUser);
+      if(state.update) {
+        state.curPage = Number(route.params.pageNo);
+        state.Data.title = String(route.params.title);
+        state.Data.content = String(route.params.content);
       }
     }
+
+    onMounted(() => {
+      initRouteParam()
+    })
 
     return {
       state,
       el,
-      changeBoardInform,
-      updateBoard
-    }
-  },
-  created() {
-    this.state.update = Boolean(this.$route.params.update);
-    this.state.post = Boolean(this.$route.params.post);
-    this.state.bbsSeq = Number(this.$route.params.bbsSeq);
-    this.state.userId = Number(this.$route.params.userId);
-    this.state.sortBy = String(this.$route.params.sortBy);
-    this.state.sortDir = String(this.$route.params.sortDir);
-    this.state.isValidUser = String(this.$route.params.isValidUser);
-      if(this.state.update) {
-        this.state.curPage = Number(this.$route.params.pageNo);
-        this.state.Data.title = String(this.$route.params.title);
-        this.state.Data.content = String(this.$route.params.content);
-      }
-  },
-  methods: {
-    movePageToHome() {
-      window.location.href='/'
+      onChangeBoardInform,
+      updateBoard,
+      onMovePageToHome
     }
   }
 })

@@ -1,5 +1,5 @@
 <template>
-    <div class="boardTitle" @click="moveHomePage()">BoardList</div>
+    <div class="boardTitle" @click.stop="onMoveHomePage()">BoardList</div>
     <div class="buttonDiv">
     <router-link :to="{ name: 'Write', params: { 
       totalPage: state.totalPage,
@@ -16,24 +16,24 @@
     </div>
     <div class = "container">
     <table class = "userListTable">
-      <th v-for="board in boardListTitle" :key ="board.name" :class="board.class" @click.stop="sort(board.name)">
+      <th v-for="board in boardListTitle" :key ="board.name" :class="board.class" @click.stop="onSort(board.name)">
         {{ board.title }} 
         <p class="sorting" v-if="decideSortItem(board.name)">{{ getSortIcon }}</p>
       </th> 
-      <tr v-for="board in state.boardList" :key ="board.bbsSeq" class = "dataList" @click="moveDetailPage(board.bbsSeq)" >
+      <tr v-for="board in state.boardList" :key ="board.bbsSeq" class = "dataList" @click.stop="onMoveDetailPage(board.bbsSeq)" >
         <td>{{ board.bbsSeq }}</td>
-        <td>{{ board.title }}</td>
+        <td >{{ board.title }} ({{ getOwnReplyLength(board.bbsSeq) }})</td>
         <td>{{ board.userId }}</td>
       </tr>
     </table>
   </div>
 
   <div class="btn-cover">
-    <button @click="MinusPageNum" :class="{'disabled': !canPrevPage, 'page-btn': canPrevPage}">
+    <button @click.stop="onMinusPageNum" :class="{'disabled': !canPrevPage, 'page-btn': canPrevPage}">
       이전
     </button>
     <span> {{ state.pageNo }} / {{ state.totalPage }} 페이지 </span>
-    <button @click="plusPageNum" :class="{'disabled': !canNextPage, 'page-btn': canNextPage}">
+    <button @click.stop="onPlusPageNum" :class="{'disabled': !canNextPage, 'page-btn': canNextPage}">
       다음
     </button>
   </div>
@@ -41,7 +41,7 @@
 
 <script lang="ts">
 import {reactive, defineComponent, onMounted, computed} from 'vue';
-import { IResBoardInform, IUserData, ESortDir, IBoardInputInform} from "@/interface";
+import { IResBoardInform, IUserData, ESortDir, IBoardInputInform, IResReplyInform, IResInform} from "@/interface";
 import axios from 'axios';
 import { useRoute } from 'vue-router';
 
@@ -49,11 +49,10 @@ export { default as detailPage } from './DetailBoard.vue';
 export default defineComponent({
   name: 'Board-detail',
   setup() {
-
     const route = useRoute();
     const state = reactive({
       boardList: [] as IResBoardInform[],
-      userId: 3,
+      userId: 2,
       countPerPage: 5,
       pageNo: 1,
       sortBy: 'bbsSeq',
@@ -63,11 +62,9 @@ export default defineComponent({
       isVisitedDetailVue:false,
       userList: [] as IUserData[],
       isValidUser: false,
-      sortBbsSeqCnt:0,
-      sortTitleCnt:0,
-      sortUserIdCnt:0,
       sortIcon: '(-)',
-      isAlreadySorted: false
+      replyLength: [] as IResReplyInform[],
+      replyList: [] as IResReplyInform[]
     });
 
     const boardListTitle : IBoardInputInform[] = [
@@ -90,16 +87,14 @@ export default defineComponent({
 
     const getBoard = () => {
       try{        
-        const url = "/api/board/?countPerPage=" + state.countPerPage + "&pageNo="+ state.pageNo + "&sortBy=" + state.sortBy + "&sortDir=" + state.sortDir;
+        const url = `/api/board/?countPerPage=${state.countPerPage}&pageNo=${state.pageNo}&sortBy=${state.sortBy}&sortDir=${state.sortDir}`;
         axios.get(url).then((res: any) => {
-          // changeDirInform();
-          updateList(res);
+          updateList(res.data);
         }); 
       } catch(err) {
         console.error(err);
       }
     }
-    
 
     const decideSortItem = (sortBy: string): boolean => {
       return state.sortBy === sortBy ? true : false;
@@ -118,18 +113,21 @@ export default defineComponent({
       return iconStr;
     });
         
-
-    const sort = (sortBy: string) => {
-      if (state.sortBy === sortBy) {
-        if (state.sortDir === ESortDir.ORIGIN) {
-          state.sortDir = ESortDir.ASC;
-        } else if (state.sortDir === ESortDir.ASC) {
-          state.sortDir = ESortDir.DESC;
-        } else {
-          state.sortDir = ESortDir.ORIGIN;
-        }
+    const changeDirInform = () => {
+      if (state.sortDir === ESortDir.ORIGIN) {
+        state.sortDir = ESortDir.ASC;
+      } else if (state.sortDir === ESortDir.ASC) {
+        state.sortDir = ESortDir.DESC;
       } else {
         state.sortDir = ESortDir.ORIGIN;
+      }
+    }
+
+    const onSort = (sortBy: string) => {
+      if (state.sortBy === sortBy) {
+        changeDirInform();
+      } else {
+        state.sortDir = ESortDir.ASC;
       }
 
       state.sortBy = sortBy;
@@ -137,34 +135,50 @@ export default defineComponent({
     }
 
     // 위에 처럼 변경
-
-    const getUser = () => axios.get("/api/user").then((res: any) => {
-      updateUserList(res);
-      isValidUser();
-    });
+    const getUser = () => {
+      try{        
+        const url = "/api/user";
+        axios.get(url).then((res: any) => {
+          updateUserList(res);
+          checkValidUser();
+        }); 
+      } catch(err) {
+        console.error(err);
+      }
+    }
 
     const updateUserList = (res: any) => {
       state.userList = res.data.data as IUserData[];
     }
 
-    const isValidUser = () => {
+    const checkValidUser = () => {
       state.isValidUser = state.userList.find((user)=> user.id === state.userId) === undefined ? false : true;
     }
 
 
-    const updateList = (res: any) => {
+    const updateList = (res: IResInform) => {
       state.boardList.length = 0;
-      state.boardList = res.data.data;
-      state.totalPage = res.data.totalPage === 0 ? 1 : res.data.totalPage;
+      state.boardList = res.data as IResBoardInform[];
+      if(res.replyList) state.replyList = res.replyList;
+      if(res.totalPage)state.totalPage = res.totalPage === 0 ? 1 : res.totalPage;
     }
 
-    const plusPageNum = () => {
-      state.pageNo < state.totalPage ? state.pageNo ++ : state.pageNo
-      getBoard()
+    const getOwnReplyLength = (bbsSeq: number): number => {
+      let getReply:IResReplyInform[] = [];
+      state.replyList.forEach((reply) => {
+        if(reply.bbsSeq === bbsSeq) getReply.push(reply)
+      });
+
+      return getReply.length;
     }
 
-    const MinusPageNum = () => {
-      state.pageNo > 1 ? state.pageNo -- : state.pageNo
+    const onPlusPageNum = () => {
+      state.pageNo < state.totalPage ? state.pageNo ++ : state.pageNo;
+      getBoard();
+    }
+
+    const onMinusPageNum = () => {
+      state.pageNo > 1 ? state.pageNo -- : state.pageNo;
       getBoard();
     }
 
@@ -189,12 +203,11 @@ export default defineComponent({
       }
     }
 
-    const moveDetailPage = (bbsSeq: number) => {
-      // `` 처리하게 변경
-      window.location.href='/detail/' + bbsSeq + "/" + state.pageNo + "/" + state.userId + "/" + state.isValidUser + "/" + state.sortBy + "/" + state.sortDir;
+    const onMoveDetailPage = (bbsSeq: number) => {
+      window.location.href=`/detail/${bbsSeq}/${state.pageNo}/${state.userId}/${state.isValidUser}/${state.sortBy}/${state.sortDir}`;
     }
 
-    const moveHomePage = () => {
+    const onMoveHomePage = () => {
       window.location.href='/';
     }
     
@@ -204,27 +217,22 @@ export default defineComponent({
       getUser();
     })
 
-
     return {
       state,
-      plusPageNum,
-      MinusPageNum,
-      isValidUser,
-      sort,
+      onPlusPageNum,
+      onMinusPageNum,
+      checkValidUser,
+      onSort,
       decideSortItem,
       canPrevPage,
       canNextPage,
       boardListTitle,
-      moveDetailPage,
-      moveHomePage,
-      getSortIcon
+      onMoveDetailPage,
+      onMoveHomePage,
+      getSortIcon,
+      getOwnReplyLength,
     }
-  },
-  created() {
-    // alert(this.$route.params.isVisitedDetailVue);
-    // this.state.isVisitedDetailVue = Boolean(this.$route.params.isVisitedDetailVue);
-    
-  },
+  }
 })
 </script>
 

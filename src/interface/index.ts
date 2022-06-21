@@ -41,6 +41,20 @@ interface IResReplyInform {
   userId: number
 }
 
+interface IResInform {
+  status: number, 
+  msg: string , 
+  data: IResBoardInform[] | IResBoardInform | IResReplyInform[] | IResReplyInform, 
+  totalLength?: number, 
+  totalPage?: number, 
+  pageSize?: number, 
+  pageNum?: number, 
+  sortBy?: ESortType, 
+  sortDir?: string, 
+  replyList?: IResReplyInform[]
+}
+
+
 enum ESortType {
   "Id" = "id",
   "Name" = "name",
@@ -69,5 +83,6 @@ export {
   IResBoardInform,
   IBoardInputInform,
   IResReplyInform,
-  EBoardSortType
+  EBoardSortType,
+  IResInform
 }
