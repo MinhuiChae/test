@@ -205,22 +205,22 @@ export default defineComponent({
     const onPostReplyInform = () => {
       const replyValue = (document.getElementById("replyContent") as HTMLInputElement).value;
       if(isValidReplyForm(replyValue)) {
-        if(isValidUser()) {
+        // if(isValidUser()) {
           doPost(replyValue);
-        } else {
-          alert("회원이 아닙니다.")
-        }
+        // } else {
+        //   alert("회원이 아닙니다.")
+        // }
       } 
     }
 
     const onUpdateReplyInform = () => {
       const replyUpdateValue = (document.getElementById("replyUpdateContent") as HTMLInputElement).value;
       if(isValidReplyForm(replyUpdateValue)) {
-        if(isValidUser()) {
+        // if(isValidUser()) {
           doUpdate(replyUpdateValue);
-        } else {
-          alert("회원이 아닙니다.")
-        }
+        // } else {
+        //   alert("회원이 아닙니다.")
+        // }
       }
     }
 
@@ -243,9 +243,9 @@ export default defineComponent({
      * 2.회원인지 체크
      * 3.post, update에 넘겨주기
      */
-    const isValidUser = ():boolean => {
-      return state.isValidUser === 'true'
-    }
+    // const isValidUser = ():boolean => {
+    //   return state.isValidUser === 'true'
+    // }
 
     const isValidReplyForm = (reply: string): boolean => {
       if(!reply) {

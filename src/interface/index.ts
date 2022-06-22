@@ -18,7 +18,7 @@ interface IBoardInputInform {
   class: string
 }
 
-interface IBoardInform {
+interface IReqBoardInform {
   title: string,
   content: string
 }
@@ -27,10 +27,11 @@ interface IResBoardInform {
   title: string,
   content: string,
   bbsSeq: number,
-  userId: number
+  userId: number,
+  replyCnt?: number
 }
 
-interface IReplyInform {
+interface IReqReplyInform {
   content: string
 }
 
@@ -50,8 +51,7 @@ interface IResInform {
   pageSize?: number, 
   pageNum?: number, 
   sortBy?: ESortType, 
-  sortDir?: string, 
-  replyList?: IResReplyInform[]
+  sortDir?: string
 }
 
 
@@ -78,8 +78,8 @@ export {
   IUserInform,
   ESortType,
   ESortDir,
-  IBoardInform,
-  IReplyInform,
+  IReqBoardInform,
+  IReqReplyInform,
   IResBoardInform,
   IBoardInputInform,
   IResReplyInform,

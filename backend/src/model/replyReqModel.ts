@@ -1,7 +1,7 @@
-import {IReplyInform} from "../interface"
-class ReplyModel {
+import {IReqReplyInform} from "../interface"
+class ReplyReqModel {
   content: string = "";
-  constructor(req: IReplyInform) {
+  constructor(req: IReqReplyInform) {
     this.content = req.content ?? "";
   }
 
@@ -10,4 +10,4 @@ class ReplyModel {
   }
 }
 
-export default ReplyModel;
+export default ReplyReqModel;

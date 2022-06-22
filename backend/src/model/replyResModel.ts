@@ -1,11 +1,11 @@
-import replydModel from "./replyReqModel"
-import { IReplyInform } from "../interface";
+import ReplyReqModel from "./replyReqModel"
+import { IReqReplyInform } from "../interface";
 
-class ReplySeqModel extends replydModel{
+class ReplySeqModel extends ReplyReqModel{
   bbsSeq: number = 0;
   replySeq: number = 0;
   userId: number = 0;
-  constructor(req: IReplyInform, bbsSeq: number, replySeq: number, userId: number) {
+  constructor(req: IReqReplyInform, bbsSeq: number, replySeq: number, userId: number) {
     super(req);
     this.bbsSeq = bbsSeq;
     this.replySeq = replySeq;

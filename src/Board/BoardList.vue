@@ -22,7 +22,7 @@
       </th> 
       <tr v-for="board in state.boardList" :key ="board.bbsSeq" class = "dataList" @click.stop="onMoveDetailPage(board.bbsSeq)" >
         <td>{{ board.bbsSeq }}</td>
-        <td >{{ board.title }} ({{ getOwnReplyLength(board.bbsSeq) }})</td>
+        <td >{{ board.title }} ({{ board.replyCnt}})</td>
         <td>{{ board.userId }}</td>
       </tr>
     </table>
@@ -113,7 +113,7 @@ export default defineComponent({
       return iconStr;
     });
         
-    const changeDirInform = () => {
+    const changeSortDir = () => {
       if (state.sortDir === ESortDir.ORIGIN) {
         state.sortDir = ESortDir.ASC;
       } else if (state.sortDir === ESortDir.ASC) {
@@ -123,13 +123,16 @@ export default defineComponent({
       }
     }
 
+    const initSortDir = () => {
+      state.sortDir = ESortDir.ASC;
+    }
+
     const onSort = (sortBy: string) => {
       if (state.sortBy === sortBy) {
-        changeDirInform();
+        changeSortDir();
       } else {
-        state.sortDir = ESortDir.ASC;
+        initSortDir();
       }
-
       state.sortBy = sortBy;
       getBoard();
     }
@@ -159,17 +162,7 @@ export default defineComponent({
     const updateList = (res: IResInform) => {
       state.boardList.length = 0;
       state.boardList = res.data as IResBoardInform[];
-      if(res.replyList) state.replyList = res.replyList;
       if(res.totalPage)state.totalPage = res.totalPage === 0 ? 1 : res.totalPage;
-    }
-
-    const getOwnReplyLength = (bbsSeq: number): number => {
-      let getReply:IResReplyInform[] = [];
-      state.replyList.forEach((reply) => {
-        if(reply.bbsSeq === bbsSeq) getReply.push(reply)
-      });
-
-      return getReply.length;
     }
 
     const onPlusPageNum = () => {
@@ -230,7 +223,6 @@ export default defineComponent({
       onMoveDetailPage,
       onMoveHomePage,
       getSortIcon,
-      getOwnReplyLength,
     }
   }
 })

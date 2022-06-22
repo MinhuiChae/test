@@ -26,7 +26,7 @@
 import {reactive, defineComponent, ref, onMounted} from 'vue';
 import useObject from '@/composition/useObject';
 import { THTMLElement } from '@/types';
-import { IBoardInform , IResBoardInform, IResInform} from "@/interface";
+import { IReqBoardInform , IResBoardInform, IResInform} from "@/interface";
 import { useRoute } from 'vue-router';
 import axios from 'axios';
 export default defineComponent({
@@ -35,7 +35,7 @@ export default defineComponent({
  
   setup() {
     const route = useRoute();
-    const boardInform: IBoardInform = {
+    const boardInform: IReqBoardInform = {
       title: '',
       content: ''
     }
@@ -49,7 +49,7 @@ export default defineComponent({
 
     const state = reactive({
       userId: 0,
-      Data: boardInform as IBoardInform,
+      Data: boardInform as IReqBoardInform,
       resData: boardData as IResBoardInform,
       totalPage: 0,
       bbsSeq:0,
@@ -106,7 +106,7 @@ export default defineComponent({
     }
 
     const el = ref<HTMLFormElement>();
-    const changeIBoardData: IBoardInform = Object.assign({}, state.Data);
+    const changeIBoardData: IReqBoardInform = Object.assign({}, state.Data);
     const { setProperty, getElementValue } = useObject();
     const checkFormList: string[] = [];
 
@@ -123,7 +123,7 @@ export default defineComponent({
       if(checkFormList.length === 0) {
         state.Data = changeIBoardData;
         if(state.post) {
-          state.isValidUser === 'true' ? postBoard() : alert("회원이 아닙니다.");
+          // state.isValidUser === 'true' ? postBoard() : alert("회원이 아닙니다.");
            postBoard()
         } else {
           updateBoard();
@@ -135,7 +135,7 @@ export default defineComponent({
     }
 
     const checkValidInform = (key: string, value: any) => {
-      !value === true ? checkFormList.push(key) : setProperty(changeIBoardData, key as keyof IBoardInform, value);
+      !value === true ? checkFormList.push(key) : setProperty(changeIBoardData, key as keyof IReqBoardInform, value);
     }
 
     const onMovePageToHome = () => {

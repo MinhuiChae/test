@@ -1,46 +1,46 @@
-import BoardModel from "../model/boardReqModel";
-import BbsModel from "../model/boardResModel";
+import BoardReqModel from "../model/boardReqModel";
+import BoardResModel from "../model/boardResModel";
 import ReplyReqModel from "../model/replyReqModel";
 import ReplyResModel from "../model/replyResModel";
 import { ESortDir} from "../enum/index";
-import { IBoardInform } from "../interface";
+import { IReqBoardInform } from "../interface";
 
-const update = <BoardModel , K extends keyof BoardModel>(updateModel: BoardModel, reqModel: BoardModel, key: K) => {
+const update = <BoardReqModel , K extends keyof BoardReqModel>(updateModel: BoardReqModel, reqModel: BoardReqModel, key: K) => {
   if (reqModel[key]) { 
     updateModel[key] = reqModel[key];
   }
 }
 
-const sortAsAsc = <K extends keyof IBoardInform>(datas: IBoardInform[], key: K) => {
-  datas.sort((a: IBoardInform, b: IBoardInform) => {
+const sortAsAsc = <K extends keyof IReqBoardInform>(datas: IReqBoardInform[], key: K) => {
+  datas.sort((a: IReqBoardInform, b: IReqBoardInform) => {
     if(a[key] < b[key]) return -1;
     if(a[key] > b[key]) return 1;
     return 0; 
   });
 }
 
-const sortAsDesc = <K extends keyof IBoardInform>(datas: IBoardInform[], key: K) => {
-  datas.sort((a: IBoardInform, b: IBoardInform) => {
+const sortAsDesc = <K extends keyof IReqBoardInform>(datas: IReqBoardInform[], key: K) => {
+  datas.sort((a: IReqBoardInform, b: IReqBoardInform) => {
     if(a[key] > b[key]) return -1;
     if(a[key] < b[key]) return 1;
     return 0; 
 })}
 
-const copiedData: BbsModel[] = [];
+const copiedData: BoardResModel[] = [];
 
 class boardService {
-  boardList: BbsModel[] = [];
+  boardList: BoardResModel[] = [];
   replyList: ReplyResModel[] = [];
-  boardPageList: BbsModel[] = [];
+  boardPageList: BoardResModel[] = [];
   dir: ESortDir = ESortDir.ASC;
   sortType: string = '';
   
-  constructor(boardList: BbsModel[], replyList: ReplyResModel[]) {
+  constructor(boardList: BoardResModel[], replyList: ReplyResModel[]) {
     this.boardList = boardList;
     this.replyList = replyList;
   }
 
-  getBoardList(): BbsModel[] {
+  getBoardList(): BoardResModel[] {
     return this.boardList;
   }
 
@@ -58,8 +58,8 @@ class boardService {
     }
   }
 
-  getBoardPageList(): BbsModel[] {
-    return this.boardPageList;
+  getBoardPageList(): BoardResModel[] {
+    return this.getBoardListAfterChangeInform(this.boardPageList);
   }
 
   getTotalCount(): number {
@@ -78,7 +78,7 @@ class boardService {
   doSortAsAsc(sortType: string) {
     Object.values(this.boardList).map(a => {
       Object.keys(a).find((key) => {
-        if(key === sortType) sortAsAsc(this.boardList, key as keyof IBoardInform);
+        if(key === sortType) sortAsAsc(this.boardList, key as keyof IReqBoardInform);
       })
     })
   }
@@ -86,14 +86,14 @@ class boardService {
   doSortAsDesc(sortType: string) {
     Object.values(this.boardList).map(a => {
       Object.keys(a).find((key) => {
-        if(key === sortType) sortAsDesc(this.boardList, key as keyof IBoardInform);
+        if(key === sortType) sortAsDesc(this.boardList, key as keyof IReqBoardInform);
       })
     })
   }
 
   doSortAsOrigin() {
     this.boardList.length = 0;
-    copiedData.forEach((a: BbsModel) => this.boardList.push(a));
+    copiedData.forEach((a: BoardResModel) => this.boardList.push(a));
   }
 
   sortBoardList(sortType: string, sortDir: ESortDir) {
@@ -112,7 +112,7 @@ class boardService {
     return this.boardList;
   }
 
-  findBoardByBbsSeq(paramsSeq: number):BbsModel | undefined {
+  findBoardByBbsSeq(paramsSeq: number):BoardResModel | undefined {
     const board = this.boardList.find((seq) => seq.bbsSeq === paramsSeq)
     return board;
   }
@@ -122,7 +122,7 @@ class boardService {
     return reply;
   }
   
-  postBoard(board: BbsModel): void {
+  postBoard(board: BoardResModel): void {
     this.boardList.push(board);
     copiedData.push(board);
   }
@@ -146,7 +146,7 @@ class boardService {
   }
 
   findBoardIndex(bbsSeq: number): number {
-    const index = this.boardList.findIndex((bbsModel) => bbsModel.bbsSeq === bbsSeq);
+    const index = this.boardList.findIndex((BoardResModel) => BoardResModel.bbsSeq === bbsSeq);
     return index;
   }
 
@@ -155,9 +155,9 @@ class boardService {
     return index;
   }
 
-  updateBoard(updateModel: BoardModel, reqModel: BoardModel) {
+  updateBoard(updateModel: BoardReqModel, reqModel: BoardReqModel) {
     Object.keys(updateModel).forEach((key) => {
-      update(updateModel, reqModel, key as keyof BoardModel);
+      update(updateModel, reqModel, key as keyof BoardReqModel);
     })
   }
 
@@ -167,7 +167,29 @@ class boardService {
     })
   }
 
-  addReplyAtOwnBoard(ownList: ReplyResModel[], paramsSeq: number) {
+  /**
+   * 1.List 안에 있는 board 의 bbsSeq 값과 replyList 안에 있는 reply 의 bbsSeq 값이 같으면 
+   *   ownReplyList에 push 한다.
+   * 2.replyCnt 값을 ownReplyList.length 로 정의하고 해당 replyCnt 값을 board 안의 replyCnt 값에 세팅해준다.
+   * 3.세팅하고 난 후의 boardList를 return 한다.
+   */
+
+  changeBoardListInform(list: BoardResModel[]) {
+    list.map((board) => {
+      const ownReplyList:ReplyResModel[] = [];
+      let replyCnt: number = 0;
+      this.getOwnReply(ownReplyList, board.bbsSeq);
+      replyCnt = ownReplyList.length;
+      board.replyCnt = replyCnt;
+    })
+  }
+
+  getBoardListAfterChangeInform(list: BoardResModel[]) {
+    this.changeBoardListInform(list)
+    return list;
+  }
+
+  getOwnReply(ownList: ReplyResModel[], paramsSeq: number) {
     this.replyList.map((list) => {
       if(list.bbsSeq === paramsSeq) ownList.push(list)
     });

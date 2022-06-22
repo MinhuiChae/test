@@ -1,9 +1,9 @@
-import { IBoardInform } from "../interface";
-class BoardModel {
+import { IReqBoardInform } from "../interface";
+class BoardReqModel {
   title: string = "";
   content: string = "";
 
-  constructor(req: IBoardInform) {
+  constructor(req: IReqBoardInform) {
     this.title = req.title ?? "";
     this.content = req.content ?? "";
   }
@@ -13,4 +13,4 @@ class BoardModel {
   }
 }
 
-export default BoardModel;
+export default BoardReqModel;
