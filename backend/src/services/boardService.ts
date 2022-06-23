@@ -2,7 +2,6 @@ import BoardReqModel from "../model/boardReqModel";
 import BoardResModel from "../model/boardResModel";
 import ReplyReqModel from "../model/replyReqModel";
 import ReplyResModel from "../model/replyResModel";
-import { ESortDir} from "../enum/index";
 import { IReqBoardInform, IBoardResponse, IResponseResponse } from "../interface";
 
 const update = <BoardReqModel , K extends keyof BoardReqModel>(updateModel: BoardReqModel, reqModel: BoardReqModel, key: K) => {
@@ -26,7 +25,7 @@ const sortByDesc = <K extends keyof IReqBoardInform>(datas: IReqBoardInform[], k
     return 0; 
 })}
 
-const copiedData: BoardResModel[] = [];
+let copiedData: BoardResModel[] = [];
 
 class BoardService {
   boardList: BoardResModel[] = [];
@@ -58,7 +57,7 @@ class BoardService {
   
 
   //2.boardList를 startIndex 부터 endIndex까지 자르는 메서드
-  getBoardList(countPerPage:any, pageNo:any, sortType: string, sortDir: ESortDir): BoardResModel[] {
+  getBoardList(countPerPage:any, pageNo:any, sortType: string, sortDir: string): BoardResModel[] {
     this.setPageCountInform(countPerPage, pageNo);
     this.sortBoardList(sortType, sortDir)
     let boardPageList: BoardResModel[] = [];
@@ -79,10 +78,10 @@ class BoardService {
   setPageCountInform(countPerPage:any, pageNo:any):void {
     if(countPerPage === undefined || typeof countPerPage === "undefined" || countPerPage === null) countPerPage = 10; 
     else {
-      if(countPerPage) countPerPage = parseInt(countPerPage);
+      if(countPerPage) countPerPage = countPerPage;
     }
     if(pageNo === undefined || typeof pageNo === "undefined" || pageNo === null) pageNo = 0; 
-    else pageNo = parseInt(pageNo);
+    else pageNo = pageNo;
   }
 
   doSortByAsc(sortType: string) {
@@ -106,7 +105,7 @@ class BoardService {
     copiedData.forEach((a: BoardResModel) => this.boardList.push(a));
   }
 
-  sortBoardList(sortType: string, sortDir: ESortDir) {
+  sortBoardList(sortType: string, sortDir: string) {
     switch(sortDir) {
       case 'asc':
         this.doSortByAsc(sortType);  
@@ -121,21 +120,22 @@ class BoardService {
   }
 
   findBoardByBbsSeq(paramsSeq: number):BoardResModel | undefined {
-    const board = this.boardList.find((seq) => seq.bbsSeq === paramsSeq)
-    return board;
+    return this.boardList.find((seq) => seq.bbsSeq === paramsSeq);
   }
 
   findReplyByReplySeq(replySeq: number): ReplyResModel | undefined {
-    const reply = this.replyList.find((seq) => seq.replySeq === replySeq);
-    return reply;
-  }
-  
-  postBoard(board: BoardResModel): void {
-    this.boardList.push(board);
-    copiedData.push(board);
+    return this.replyList.find((seq) => seq.replySeq === replySeq);
   }
 
-  createNewBoard(reqBoard: BoardReqModel, paramsId: number) {
+  postBoard(board: BoardReqModel, boardId: number): BoardResModel {
+    const newBoardData = this.createNewBoard(board, boardId);
+    this.boardList.push(newBoardData);
+    copiedData = [...this.boardList];
+
+    return newBoardData;
+  }
+
+  private createNewBoard(reqBoard: BoardReqModel, paramsId: number) {
     const newBbsSeq: number = this.getNewBoardseq();
     return new BoardResModel(newBbsSeq, paramsId ,reqBoard);
   }
@@ -167,10 +167,10 @@ class BoardService {
     }
   }
 
-  getDeleteReplyResponse(paramsBbsSeq: number, paramsReplySeq: number, replySeq: number): number{
+  getDeleteReplyResponse(paramsBbsSeq: number, paramsReplySeq: number): number{
     if(this.findBoardByBbsSeq(paramsBbsSeq) !== undefined) {
       if(this.findReplyIndex(paramsReplySeq) !== -1) {
-        const replyIndex = this.findReplyIndex(replySeq);
+        const replyIndex = this.findReplyIndex(paramsReplySeq);
         this.replyList.splice(replyIndex, 1);
         return 200;
       } else {
@@ -198,9 +198,9 @@ class BoardService {
   getUpdateBoardResponse(bbsSeq: number,  updateBoard: BoardReqModel, paramsId: number):IBoardResponse  {
     const existingBoard: BoardResModel | undefined = this.findBoardByBbsSeq(bbsSeq);
     if(existingBoard) {
-      const data: BoardResModel = new BoardResModel(bbsSeq, paramsId ,updateBoard);
-      this.updateBoard(existingBoard, data);
-      return {data: data, status: 200};
+      const resBoard: BoardResModel = new BoardResModel(bbsSeq, paramsId ,updateBoard);
+      this.updateBoard(existingBoard, resBoard);
+      return {data: resBoard, status: 200};
     } else {
       return {data: [], status: 404}
     }
@@ -256,7 +256,6 @@ class BoardService {
   getNewReplyseq(): number {
     return this.replyList.length === 0 ? 1 : Math.max(...this.replyList.map((reply) => reply.replySeq)) + 1;
   }
-
 
 }
 

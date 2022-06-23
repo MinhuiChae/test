@@ -28,43 +28,32 @@ class BoardController {
   res: express.Response;
   boardResponse: BoardResponse;
   boardService: BoardService;
+  reqBoard: BoardReqModel;
 
   constructor(req: express.Request, res: express.Response) {
     this.req = req;
     this.res = res;
     this.boardResponse = new BoardResponse(this.res);
     this.boardService = new BoardService(boardList, replyList)
+    this.reqBoard = new BoardReqModel(this.req.body as IReqBoardInform)
   }
 
   getBoardList() {
-    let countPerPage: any = this.req.query.countPerPage;
-    let pageNo: any = this.req.query.pageNo;
-    let sortBy: any = this.req.query.sortBy;
-    let sortDir: any = this.req.query.sortDir;
-    
-    if(pageNo > 0) {
-      let totalPage: number = this.boardService.getPageCount(countPerPage);
-      this.boardResponse.response({
-        status:EStatusCode.SUCCESS, 
-        msg: ResponseMessage.SUCCESS, 
-        data: this.boardService.getBoardList(countPerPage, pageNo, sortBy, sortDir), 
-        totalLength : this.boardService.getTotalCount(), 
-        totalPage: totalPage, 
-        pageSize: countPerPage, 
-        pageNum: pageNo, 
-        sortBy: sortBy, 
-        sortDir: sortDir});
-    } else {
-      this.boardResponse.response({
-        status: EStatusCode.SUCCESS, 
-        msg: ResponseMessage.SUCCESS, 
-        data: this.boardService.getBoardList(countPerPage, pageNo, sortBy, sortDir), 
-        totalLength : this.boardService.getTotalCount(), 
-        pageSize: countPerPage, 
-        pageNum: pageNo, 
-        sortBy: sortBy, 
-        sortDir: sortDir});
-    }
+    const countPerPage: number = Number(this.req.query.countPerPage);
+    const pageNo: number = Number(this.req.query.pageNo);
+    const sortBy: string = this.req.query.sortBy as string;
+    const sortDir: string = this.req.query.sortDir as string;
+    const totalPage: number = this.boardService.getPageCount(countPerPage);
+    this.boardResponse.response({
+      status:EStatusCode.SUCCESS, 
+      msg: ResponseMessage.SUCCESS, 
+      data: this.boardService.getBoardList(countPerPage, pageNo, sortBy, sortDir), 
+      totalLength : this.boardService.getTotalCount(), 
+      totalPage: totalPage, 
+      pageSize: countPerPage, 
+      pageNum: pageNo, 
+      sortBy: sortBy, 
+      sortDir: sortDir});
   }
 
   getBoardDetail() {
@@ -88,21 +77,20 @@ class BoardController {
   }
 
   postBoard() {
-    const reqBoard: BoardReqModel = new BoardReqModel(this.req.body as IReqBoardInform)
-    const paramsId: number = Number(this.req.params.id);
+    const boardId: number = Number(this.req.params.id);
     let response = {
       status: EStatusCode.WRONGFORMAT,
       msg:  ResponseMessage.WRONG_FORMAT,
       data: [],
     } as IResInform
 
-    if(reqBoard.isValidation()) {
-      const newBoard = this.boardService.createNewBoard(reqBoard, paramsId);
-      this.boardService.postBoard(newBoard);
+    if (this.reqBoard.isValidation()) {
+      const newBoardData = this.boardService.postBoard(this.reqBoard, boardId);
+      
       response = {
         status: EStatusCode.SUCCESS,
         msg:  ResponseMessage.SUCCESS,
-        data: newBoard
+        data: newBoardData
       }
     } 
     this.boardResponse.response(response)
@@ -135,7 +123,6 @@ class BoardController {
 
   updateBoard() {
     const bbsSeq: number = Number(this.req.params.bbsSeq);
-    const updateBoard: BoardReqModel = new BoardReqModel(this.req.body as IReqBoardInform);
     const paramsId: number = Number(this.req.body.id);
     let response = {
       status: EStatusCode.WRONGFORMAT,
@@ -143,8 +130,8 @@ class BoardController {
       data: [],
     } as IResInform
 
-    if(updateBoard.isValidation()) {
-      const updateResponse = this.boardService.getUpdateBoardResponse(bbsSeq, updateBoard,paramsId)
+    if(this.reqBoard.isValidation()) {
+      const updateResponse = this.boardService.getUpdateBoardResponse(bbsSeq, this.reqBoard, paramsId)
       if(updateResponse.status === 200) {
         response = {
           status: EStatusCode.SUCCESS,
@@ -176,14 +163,14 @@ class BoardController {
     const paramsSeq: number = Number(this.req.params.bbsSeq);
     const paramsId: number = Number(this.req.params.id);
     const reqReply: ReplyReqModel = new ReplyReqModel(this.req.body as IReqReplyInform);
-    const newReply = this.boardService.createNewReply(reqReply, paramsSeq, paramsId);
     let response = {
       status: EStatusCode.WRONGFORMAT,
       msg:  ResponseMessage.WRONG_FORMAT,
       data: [],
     } as IResInform
 
-    if(newReply.isValidation()) {
+    if(reqReply.isValidation()) {
+      const newReply = this.boardService.createNewReply(reqReply, paramsSeq, paramsId);
       const postReplyResponse = this.boardService.getPostReplyResponse(paramsSeq, newReply)
       if(postReplyResponse) {
         response = {
@@ -211,7 +198,7 @@ class BoardController {
   deleteReply() {
     const paramsBbsSeq: number = Number(this.req.params.bbsSeq);
     const paramsReplySeq: number = Number(this.req.params.replySeq);
-    const deleteResponseNum: number = this.boardService.getDeleteReplyResponse(paramsBbsSeq, paramsReplySeq, paramsReplySeq);
+    const deleteResponseNum: number = this.boardService.getDeleteReplyResponse(paramsBbsSeq, paramsReplySeq);
     let response = {
       status: EStatusCode.NOTFOUND,
       msg:  ResponseMessage.NOT_FOUNT_REPLYSEQ,

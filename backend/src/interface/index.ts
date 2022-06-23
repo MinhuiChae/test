@@ -39,7 +39,7 @@ interface IResInform {
   totalPage?: number, 
   pageSize?: number, 
   pageNum?: number, 
-  sortBy?: ESortType, 
+  sortBy?: string, 
   sortDir?: string
 }
 
