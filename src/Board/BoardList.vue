@@ -52,7 +52,7 @@ export default defineComponent({
     const route = useRoute();
     const state = reactive({
       boardList: [] as IResBoardInform[],
-      userId: 2,
+      userId: 3,
       countPerPage: 5,
       pageNo: 1,
       sortBy: 'bbsSeq',
@@ -85,11 +85,11 @@ export default defineComponent({
       }
     ]
 
-    const getBoard = () => {
+    const getBoardList = () => {
       try{        
         const url = `/api/board/?countPerPage=${state.countPerPage}&pageNo=${state.pageNo}&sortBy=${state.sortBy}&sortDir=${state.sortDir}`;
         axios.get(url).then((res: any) => {
-          updateList(res.data);
+          updateBoardList(res.data);
         }); 
       } catch(err) {
         console.error(err);
@@ -134,16 +134,16 @@ export default defineComponent({
         initSortDir();
       }
       state.sortBy = sortBy;
-      getBoard();
+      getBoardList();
     }
 
-    // 위에 처럼 변경
-    const getUser = () => {
+    // userList를 업데이트 하고 find하는 함수 호출
+    const checkValidUser = () => {
       try{        
         const url = "/api/user";
         axios.get(url).then((res: any) => {
           updateUserList(res);
-          checkValidUser();
+          checkUserInUserList();
         }); 
       } catch(err) {
         console.error(err);
@@ -154,12 +154,12 @@ export default defineComponent({
       state.userList = res.data.data as IUserData[];
     }
 
-    const checkValidUser = () => {
+    //userId가 회원인지 아닌지 체크 한 다음 boolean 값을 isValidUser에 넣어주는 함수
+    const checkUserInUserList = () => {
       state.isValidUser = state.userList.find((user)=> user.id === state.userId) === undefined ? false : true;
     }
 
-
-    const updateList = (res: IResInform) => {
+    const updateBoardList = (res: IResInform) => {
       state.boardList.length = 0;
       state.boardList = res.data as IResBoardInform[];
       if(res.totalPage)state.totalPage = res.totalPage === 0 ? 1 : res.totalPage;
@@ -167,12 +167,12 @@ export default defineComponent({
 
     const onPlusPageNum = () => {
       state.pageNo < state.totalPage ? state.pageNo ++ : state.pageNo;
-      getBoard();
+      getBoardList();
     }
 
     const onMinusPageNum = () => {
       state.pageNo > 1 ? state.pageNo -- : state.pageNo;
-      getBoard();
+      getBoardList();
     }
 
     // 3 항 연산자
@@ -206,15 +206,14 @@ export default defineComponent({
     
     onMounted(() => {
       initRouteParam();
-      getBoard(),
-      getUser();
+      getBoardList(),
+      checkValidUser()
     })
 
     return {
       state,
       onPlusPageNum,
       onMinusPageNum,
-      checkValidUser,
       onSort,
       decideSortItem,
       canPrevPage,

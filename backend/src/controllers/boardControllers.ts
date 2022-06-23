@@ -41,9 +41,9 @@ class BoardController {
     let pageNo: any = this.req.query.pageNo;
     let sortBy: any = this.req.query.sortBy;
     let sortDir: any = this.req.query.sortDir;
-    let totalPage: number = this.boardService.getPageCount(countPerPage);
-
+    
     if(pageNo > 0) {
+      let totalPage: number = this.boardService.getPageCount(countPerPage);
       this.boardResponse.response({
         status:EStatusCode.SUCCESS, 
         msg: ResponseMessage.SUCCESS, 
@@ -70,34 +70,61 @@ class BoardController {
   getBoardDetail() {
     const paramsSeq = Number(this.req.params.bbsSeq);
     const board: BoardResModel | undefined = this.boardService.findBoardByBbsSeq(paramsSeq);
+
+    let response = {
+      status: EStatusCode.NOTFOUND,
+      msg:  ResponseMessage.NOT_FOUNT_BBSSEQ,
+      data: [],
+    } as IResInform
+
     if(board) {
-      this.boardResponse.response({status: EStatusCode.SUCCESS, msg: ResponseMessage.SUCCESS, data: board})
-    } else {
-      this.boardResponse.response({status: EStatusCode.NOTFOUND, msg: ResponseMessage.NOT_FOUNT_BBSSEQ, data: []})
-    }
+      response = {
+        status: EStatusCode.SUCCESS,
+        msg:  ResponseMessage.SUCCESS,
+        data: board,
+      }
+    } 
+    this.boardResponse.response(response)
   }
 
   postBoard() {
     const reqBoard: BoardReqModel = new BoardReqModel(this.req.body as IReqBoardInform)
     const paramsId: number = Number(this.req.params.id);
+    let response = {
+      status: EStatusCode.WRONGFORMAT,
+      msg:  ResponseMessage.WRONG_FORMAT,
+      data: [],
+    } as IResInform
 
     if(reqBoard.isValidation()) {
       const newBoard = this.boardService.createNewBoard(reqBoard, paramsId);
       this.boardService.postBoard(newBoard);
-      this.boardResponse.response({status:EStatusCode.SUCCESS, msg: ResponseMessage.SUCCESS, data: newBoard})
-    } else {
-      this.boardResponse.response({status:EStatusCode.WRONGFORMAT, msg: ResponseMessage.WRONG_FORMAT, data: []});
-    }
+      response = {
+        status: EStatusCode.SUCCESS,
+        msg:  ResponseMessage.SUCCESS,
+        data: newBoard
+      }
+    } 
+    this.boardResponse.response(response)
   }
 
   deleteBoard() {
     const paramsSeq: number = Number(this.req.params.bbsSeq);
-    if(this.boardService.findBoardIndex(paramsSeq) !== -1) {
-      this.boardService.deleteBoard(paramsSeq);
-      this.boardResponse.response({status:EStatusCode.SUCCESS, msg: ResponseMessage.SUCCESS, data: []})
-    } else {
-      this.boardResponse.response({status:EStatusCode.NOTFOUND, msg: ResponseMessage.NOT_FOUNT_BBSSEQ, data: []})
-    }
+    const getDeleteBoardResponse = this.boardService.getDeleteBoardResponse(paramsSeq);
+    let response = {
+      status: EStatusCode.NOTFOUND,
+      msg:  ResponseMessage.NOT_FOUNT_BBSSEQ,
+      data: [],
+    } as IResInform
+
+    if(getDeleteBoardResponse) {
+      response = {
+        status: EStatusCode.SUCCESS,
+        msg:  ResponseMessage.SUCCESS,
+        data: [],
+      }
+    } 
+    this.boardResponse.response(response)
   }
 
   /**
@@ -108,43 +135,71 @@ class BoardController {
 
   updateBoard() {
     const bbsSeq: number = Number(this.req.params.bbsSeq);
-    const existingBoard: BoardResModel | undefined = this.boardService.findBoardByBbsSeq(bbsSeq);
-    if(existingBoard) {
-      const updateBoard: BoardReqModel = new BoardReqModel(this.req.body as IReqBoardInform);
-      if(updateBoard.isValidation()) {
-        const paramsId: number = Number(this.req.body.id);
-        const board: BoardResModel = new BoardResModel(bbsSeq, paramsId ,updateBoard);
-        this.boardService.updateBoard(existingBoard, board);
-        this.boardResponse.response({status:EStatusCode.SUCCESS, msg: ResponseMessage.SUCCESS, data: board})
+    const updateBoard: BoardReqModel = new BoardReqModel(this.req.body as IReqBoardInform);
+    const paramsId: number = Number(this.req.body.id);
+    let response = {
+      status: EStatusCode.WRONGFORMAT,
+      msg:  ResponseMessage.WRONG_FORMAT,
+      data: [],
+    } as IResInform
+
+    if(updateBoard.isValidation()) {
+      const updateResponse = this.boardService.getUpdateBoardResponse(bbsSeq, updateBoard,paramsId)
+      if(updateResponse.status === 200) {
+        response = {
+          status: EStatusCode.SUCCESS,
+          msg:  ResponseMessage.SUCCESS,
+          data: updateResponse.data,
+        }
       } else {
-        this.boardResponse.response({status:EStatusCode.WRONGFORMAT, msg: ResponseMessage.WRONG_FORMAT, data: []});
+        response = {
+          status: EStatusCode.NOTFOUND,
+          msg:  ResponseMessage.NOT_FOUNT_BBSSEQ,
+          data: [],
+        }
       }
-    } else {
-      this.boardResponse.response({status:EStatusCode.NOTFOUND, msg: ResponseMessage.NOT_FOUNT_BBSSEQ, data: []});
     }
+    this.boardResponse.response(response);
   }
 
   getReplyList() {
     const paramsSeq: number = Number(this.req.params.bbsSeq);
-    const list = this.boardService.getReplayListByBoardSeq(paramsSeq)
-    this.boardResponse.response({status:EStatusCode.SUCCESS, msg: ResponseMessage.SUCCESS, data: list})
+    const list = this.boardService.getReplyListByBoardSeq(paramsSeq)
+    this.boardResponse.response({
+      status:EStatusCode.SUCCESS, 
+      msg: ResponseMessage.SUCCESS, 
+      data: list
+    })
   }
 
   postReply() {
     const paramsSeq: number = Number(this.req.params.bbsSeq);
-    if(this.boardService.findBoardIndex(paramsSeq) !== -1) {
-      const paramsId: number = Number(this.req.params.id);
-      const reqReply: ReplyReqModel = new ReplyReqModel(this.req.body as IReqReplyInform);
-      const newReply = this.boardService.createNewReply(reqReply, paramsSeq, paramsId)
-      if(newReply.isValidation()) {
-        this.boardService.postReply(newReply);
-        this.boardResponse.response({status:EStatusCode.SUCCESS, msg: ResponseMessage.SUCCESS, data: newReply})
+    const paramsId: number = Number(this.req.params.id);
+    const reqReply: ReplyReqModel = new ReplyReqModel(this.req.body as IReqReplyInform);
+    const newReply = this.boardService.createNewReply(reqReply, paramsSeq, paramsId);
+    let response = {
+      status: EStatusCode.WRONGFORMAT,
+      msg:  ResponseMessage.WRONG_FORMAT,
+      data: [],
+    } as IResInform
+
+    if(newReply.isValidation()) {
+      const postReplyResponse = this.boardService.getPostReplyResponse(paramsSeq, newReply)
+      if(postReplyResponse) {
+        response = {
+          status: EStatusCode.SUCCESS,
+          msg:  ResponseMessage.SUCCESS,
+          data: newReply,
+        }
       } else {
-        this.boardResponse.response({status:EStatusCode.WRONGFORMAT, msg: ResponseMessage.WRONG_FORMAT, data: []});
+        response = {
+          status: EStatusCode.NOTFOUND,
+          msg:  ResponseMessage.NOT_FOUNT_BBSSEQ,
+          data: [],
+        }
       }
-    } else {
-      this.boardResponse.response({status:EStatusCode.NOTFOUND, msg: ResponseMessage.NOT_FOUNT_BBSSEQ, data: []})
-    }
+    } 
+    this.boardResponse.response(response);
   }
 
   /**
@@ -156,43 +211,72 @@ class BoardController {
   deleteReply() {
     const paramsBbsSeq: number = Number(this.req.params.bbsSeq);
     const paramsReplySeq: number = Number(this.req.params.replySeq);
-    const ownreplyList:ReplyResModel[]  = [];
-    if(this.boardService.findBoardByBbsSeq(paramsBbsSeq) !== undefined) {
-      if(this.boardService.findReplyIndex(paramsReplySeq) !== -1) {
-        this.boardService.deleteReply(paramsReplySeq);
-        this.boardResponse.response({status:EStatusCode.SUCCESS, msg: ResponseMessage.SUCCESS, data: ownreplyList});
-      } else {
-        this.boardResponse.response({status:EStatusCode.NOTFOUND, msg: ResponseMessage.NOT_FOUNT_REPLYSEQ, data: []});
+    const deleteResponseNum: number = this.boardService.getDeleteReplyResponse(paramsBbsSeq, paramsReplySeq, paramsReplySeq);
+    let response = {
+      status: EStatusCode.NOTFOUND,
+      msg:  ResponseMessage.NOT_FOUNT_REPLYSEQ,
+      data: [],
+    } as IResInform
+
+    if(deleteResponseNum === 200) {
+      response = {
+        status: EStatusCode.SUCCESS,
+        msg:  ResponseMessage.SUCCESS,
+        data: [],
       }
-    } else {
-      this.boardResponse.response({status:EStatusCode.NOTFOUND, msg: ResponseMessage.NOT_FOUNT_BBSSEQ, data: []});
-    }
+    } else if(deleteResponseNum === 404) {
+      response = {
+        status: EStatusCode.NOTFOUND,
+        msg:  ResponseMessage.NOT_FOUNT_BBSSEQ,
+        data: [],
+      }
+    } 
+    this.boardResponse.response(response);
   }
+
+  /**
+   * 1.controlelr 영역에서 체크할거 먼저 체크(invalidation)
+   * update하려는 댓글이 달린 Board가 존재하는지 체크한다.
+   * 2.댓글의 index 를 체크한다.
+   * 3.만약 index 값이 -1이면 댓글이 존재하지 않는걸로 처리
+   * 4.댓글이 있으면 update 하고 update 완료 된 list 를 data로 넘겨준다.
+   */
 
   updateReply() {
-    const paramsBbsSeq: number = Number(this.req.params.bbsSeq);
     const paramsReplySeq: number = Number(this.req.params.replySeq);
-    const reqReply: ReplyReqModel = new ReplyReqModel(this.req.body as IReqReplyInform);
-    const ownreplyList:ReplyResModel[]  = [];
+    const paramsBbsSeq: number = Number(this.req.params.bbsSeq);
+    const reqReply: ReplyReqModel = new ReplyReqModel(this.req.body as IReqReplyInform);   
+    let response = {
+      status: EStatusCode.WRONGFORMAT,
+      msg:  ResponseMessage.WRONG_FORMAT,
+      data: [],
+    } as IResInform
+    
     if(reqReply.isValidation()) {
-      if(this.boardService.findReplyByReplySeq(paramsReplySeq) !== undefined) {
-        if(this.boardService.findReplyIndex(paramsReplySeq) !== -1) {
-          let reply = this.boardService.findReplyByReplySeq(paramsReplySeq);
-          if(reply)
-          this.boardService.updateReply(reply, reqReply);
-          const list = this.boardService.getReplayListByBoardSeq(paramsBbsSeq);
-          this.boardResponse.response({status:EStatusCode.SUCCESS, msg: ResponseMessage.SUCCESS, data: list});
-        } else {
-          this.boardResponse.response({status:EStatusCode.NOTFOUND, msg: ResponseMessage.NOT_FOUNT_REPLYSEQ, data: []});
+      const getUpdateReplyResponse = this.boardService.getUpdateReplyResponse(paramsReplySeq, paramsBbsSeq, reqReply);
+      
+      if(getUpdateReplyResponse.status === 200) {
+        response = {
+          status: EStatusCode.SUCCESS,
+          msg:  ResponseMessage.SUCCESS,
+          data: getUpdateReplyResponse.data,
+        }
+      } else if(getUpdateReplyResponse.status === 404) {
+        response = {
+          status: EStatusCode.NOTFOUND,
+          msg:  ResponseMessage.NOT_FOUNT_BBSSEQ,
+          data: [],
         }
       } else {
-        this.boardResponse.response({status:EStatusCode.NOTFOUND, msg: ResponseMessage.NOT_FOUNT_BBSSEQ, data: []});
+        response = {
+          status: EStatusCode.NOTFOUND,
+          msg:  ResponseMessage.NOT_FOUNT_REPLYSEQ,
+          data: [],
+        }
       }
-    } else {
-      this.boardResponse.response({status:EStatusCode.WRONGFORMAT, msg: ResponseMessage.WRONG_FORMAT, data: []});
-    }
+    } 
+    this.boardResponse.response(response);
   }
 }
-
 
 export {BoardController, boardList};

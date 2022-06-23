@@ -61,14 +61,14 @@ export default defineComponent({
       sortDir: '',
     })
 
-    const updateBoardList = (res: IResInform) => {
+    const updateBoardDetail = (res: IResInform) => {
       state.resData = res.data as IResBoardInform;
     }
 
     const completedWrite = (res: IResInform, num: number) => {
       state.post = false;
       state.update = false;
-      updateBoardList(res);
+      updateBoardDetail(res);
       alert(res.msg);
       moveToDetailPage(num);
     }
@@ -123,8 +123,7 @@ export default defineComponent({
       if(checkFormList.length === 0) {
         state.Data = changeIBoardData;
         if(state.post) {
-          // state.isValidUser === 'true' ? postBoard() : alert("회원이 아닙니다.");
-           postBoard()
+          state.isValidUser === 'true' ? postBoard() : alert("회원이 아닙니다.");
         } else {
           updateBoard();
         }

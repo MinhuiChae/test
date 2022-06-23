@@ -16,9 +16,9 @@
       sortBy: state.sortBy,
       sortDir: state.sortDir
     }}">
-    <button class="backToHomeButton" v-if="state.isWriter">수정</button>
+    <button class="backToHomeButton" v-if="isBoardWriter()">수정</button>
     </router-link>
-    <button @click.stop="onDeleteBoard" class="backToHomeButton" v-if="state.isWriter">삭제</button>
+    <button @click.stop="onDeleteBoard" class="backToHomeButton" v-if="isBoardWriter()">삭제</button>
     </div>
   </div>
     <table class="boardDetailView">
@@ -100,7 +100,6 @@ export default defineComponent({
       updateSeq: 0,
       replySeq:0,
       isValidUser: '',
-      isWriter: false,
       isReplyWriter: false,
       sortBy: '',
       sortDir: ''
@@ -114,15 +113,14 @@ export default defineComponent({
       try{        
         const url = "/api/board/" + state.bbsSeq;
         axios.get(url).then((res: any) => {
-          updateBoardList(res.data);
-          checkBoardWriter();
+          updateBoard(res.data);
         }); 
       } catch(err) {
         console.error(err);
       }
     }
 
-    const updateBoardList = (res: IResInform) => {
+    const updateBoard = (res: IResInform) => {
       state.board = res.data as IResBoardInform;
     }
 
@@ -205,22 +203,22 @@ export default defineComponent({
     const onPostReplyInform = () => {
       const replyValue = (document.getElementById("replyContent") as HTMLInputElement).value;
       if(isValidReplyForm(replyValue)) {
-        // if(isValidUser()) {
+        if(isValidUser()) {
           doPost(replyValue);
-        // } else {
-        //   alert("회원이 아닙니다.")
-        // }
+        } else {
+          alert("회원이 아닙니다.")
+        }
       } 
     }
 
     const onUpdateReplyInform = () => {
       const replyUpdateValue = (document.getElementById("replyUpdateContent") as HTMLInputElement).value;
       if(isValidReplyForm(replyUpdateValue)) {
-        // if(isValidUser()) {
+        if(isValidUser()) {
           doUpdate(replyUpdateValue);
-        // } else {
-        //   alert("회원이 아닙니다.")
-        // }
+        } else {
+          alert("회원이 아닙니다.")
+        }
       }
     }
 
@@ -243,9 +241,9 @@ export default defineComponent({
      * 2.회원인지 체크
      * 3.post, update에 넘겨주기
      */
-    // const isValidUser = ():boolean => {
-    //   return state.isValidUser === 'true'
-    // }
+    const isValidUser = ():boolean => {
+      return state.isValidUser === 'true'
+    }
 
     const isValidReplyForm = (reply: string): boolean => {
       if(!reply) {
@@ -271,8 +269,8 @@ export default defineComponent({
       deleteReply()
     }
 
-    const checkBoardWriter = () => {
-      state.isWriter = state.board.userId === state.userId ? true : false;
+    const isBoardWriter = (): boolean => {
+      return state.board.userId === state.userId;
     }
 
     const isReplyWriter = (userId:number): boolean => {
@@ -314,7 +312,8 @@ export default defineComponent({
       onDeleteReplyInform,
       isReplyWriter,
       onMovePageToList,
-      onMovePageToHome
+      onMovePageToHome,
+      isBoardWriter
     }
   }
 });

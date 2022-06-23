@@ -3,7 +3,7 @@ import BoardResModel from "../model/boardResModel";
 import ReplyReqModel from "../model/replyReqModel";
 import ReplyResModel from "../model/replyResModel";
 import { ESortDir} from "../enum/index";
-import { IReqBoardInform } from "../interface";
+import { IReqBoardInform, IBoardResponse, IResponseResponse } from "../interface";
 
 const update = <BoardReqModel , K extends keyof BoardReqModel>(updateModel: BoardReqModel, reqModel: BoardReqModel, key: K) => {
   if (reqModel[key]) { 
@@ -11,7 +11,7 @@ const update = <BoardReqModel , K extends keyof BoardReqModel>(updateModel: Boar
   }
 }
 
-const sortAsAsc = <K extends keyof IReqBoardInform>(datas: IReqBoardInform[], key: K) => {
+const sortByAsc = <K extends keyof IReqBoardInform>(datas: IReqBoardInform[], key: K) => {
   datas.sort((a: IReqBoardInform, b: IReqBoardInform) => {
     if(a[key] < b[key]) return -1;
     if(a[key] > b[key]) return 1;
@@ -19,7 +19,7 @@ const sortAsAsc = <K extends keyof IReqBoardInform>(datas: IReqBoardInform[], ke
   });
 }
 
-const sortAsDesc = <K extends keyof IReqBoardInform>(datas: IReqBoardInform[], key: K) => {
+const sortByDesc = <K extends keyof IReqBoardInform>(datas: IReqBoardInform[], key: K) => {
   datas.sort((a: IReqBoardInform, b: IReqBoardInform) => {
     if(a[key] > b[key]) return -1;
     if(a[key] < b[key]) return 1;
@@ -58,18 +58,20 @@ class BoardService {
   
 
   //2.boardList를 startIndex 부터 endIndex까지 자르는 메서드
-    getBoardList(countPerPage:any, pageNo:any, sortType: string, sortDir: ESortDir): BoardResModel[] {
+  getBoardList(countPerPage:any, pageNo:any, sortType: string, sortDir: ESortDir): BoardResModel[] {
     this.setPageCountInform(countPerPage, pageNo);
     this.sortBoardList(sortType, sortDir)
     let boardPageList: BoardResModel[] = [];
     const startItemNo = ((pageNo -1) * countPerPage);
+    
     boardPageList = [...this.boardList].splice(startItemNo, countPerPage);
     boardPageList.forEach((boardInfo) => {
-      boardInfo.replyCnt = this.getReplayListByBoardSeq(boardInfo.bbsSeq).length;
+      boardInfo.replyCnt = this.getReplyListByBoardSeq(boardInfo.bbsSeq).length;
     })
 
     return boardPageList;
   }
+
   getTotalCount(): number {
     return this.boardList.length;
   }
@@ -83,23 +85,23 @@ class BoardService {
     else pageNo = parseInt(pageNo);
   }
 
-  doSortAsAsc(sortType: string) {
+  doSortByAsc(sortType: string) {
     Object.values(this.boardList).map(a => {
       Object.keys(a).find((key) => {
-        if(key === sortType) sortAsAsc(this.boardList, key as keyof IReqBoardInform);
+        if(key === sortType) sortByAsc(this.boardList, key as keyof IReqBoardInform);
       })
     })
   }
 
-  doSortAsDesc(sortType: string) {
+  doSortByDesc(sortType: string) {
     Object.values(this.boardList).map(a => {
       Object.keys(a).find((key) => {
-        if(key === sortType) sortAsDesc(this.boardList, key as keyof IReqBoardInform);
+        if(key === sortType) sortByDesc(this.boardList, key as keyof IReqBoardInform);
       })
     })
   }
 
-  doSortAsOrigin() {
+  doSortByOrigin() {
     this.boardList.length = 0;
     copiedData.forEach((a: BoardResModel) => this.boardList.push(a));
   }
@@ -107,13 +109,13 @@ class BoardService {
   sortBoardList(sortType: string, sortDir: ESortDir) {
     switch(sortDir) {
       case 'asc':
-        this.doSortAsAsc(sortType);  
+        this.doSortByAsc(sortType);  
         break;
       case 'desc':
-        this.doSortAsDesc(sortType);
+        this.doSortByDesc(sortType);
         break;
       case 'origin':
-        this.doSortAsOrigin();
+        this.doSortByOrigin();
     }
     return this.boardList;
   }
@@ -156,9 +158,25 @@ class BoardService {
     copiedData.splice(boardIndex, 1);
   }
 
-  deleteReply(replySeq: number): void{
-    const replyIndex = this.findReplyIndex(replySeq);
-    this.replyList.splice(replyIndex, 1);
+  getDeleteBoardResponse(paramsSeq: number): boolean {
+    if(this.findBoardIndex(paramsSeq) !== -1) {
+      this.deleteBoard(paramsSeq)
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  getDeleteReplyResponse(paramsBbsSeq: number, paramsReplySeq: number, replySeq: number): number{
+    if(this.findBoardByBbsSeq(paramsBbsSeq) !== undefined) {
+      if(this.findReplyIndex(paramsReplySeq) !== -1) {
+        const replyIndex = this.findReplyIndex(replySeq);
+        this.replyList.splice(replyIndex, 1);
+        return 200;
+      } else {
+        return 405;
+      }
+    } return 404;
   }
 
   findBoardIndex(bbsSeq: number): number {
@@ -177,18 +195,54 @@ class BoardService {
     })
   }
 
+  getUpdateBoardResponse(bbsSeq: number,  updateBoard: BoardReqModel, paramsId: number):IBoardResponse  {
+    const existingBoard: BoardResModel | undefined = this.findBoardByBbsSeq(bbsSeq);
+    if(existingBoard) {
+      const data: BoardResModel = new BoardResModel(bbsSeq, paramsId ,updateBoard);
+      this.updateBoard(existingBoard, data);
+      return {data: data, status: 200};
+    } else {
+      return {data: [], status: 404}
+    }
+  } 
+
   updateReply(updateModel: ReplyReqModel, reqModel: ReplyReqModel) {
     Object.keys(updateModel).forEach((key) => {
       update(updateModel, reqModel, key as keyof ReplyReqModel);
     })
   }
 
-  getReplayListByBoardSeq(findBoardSeq: number) : ReplyResModel[] {
+  getUpdateReplyResponse(paramsReplySeq: number, paramsBbsSeq: number, reqReply: ReplyReqModel):IResponseResponse {
+    if(this.findBoardByBbsSeq(paramsBbsSeq) !== undefined) {
+      let reply = this.findReplyByReplySeq(paramsReplySeq);
+      if(reply) {
+        this.updateReply(reply, reqReply);
+        const list = this.getReplyListByBoardSeq(paramsBbsSeq);
+        return {data: list, status:200}
+      }
+      else {
+        return {data: [], status:405}
+      }
+    } else {
+      return {data: [], status:404}
+    }
+  }
+
+  getReplyListByBoardSeq(findBoardSeq: number) : ReplyResModel[] {
     return this.replyList.filter((list) => list.bbsSeq === findBoardSeq);
   }
 
   postReply(resReply: ReplyResModel) {
     this.replyList.push(resReply);
+  }
+
+  getPostReplyResponse(paramsSeq: number, newReply:ReplyResModel):boolean {
+    if(this.findBoardIndex(paramsSeq) !== -1) {
+      this.postReply(newReply);
+      return true;
+    } else {
+      return false;
+    }
   }
 
   getReplyList():ReplyResModel[] {

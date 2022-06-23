@@ -43,11 +43,23 @@ interface IResInform {
   sortDir?: string
 }
 
+interface IBoardResponse {
+  data: IResBoardInform | [],
+  status: number
+}
+
+interface IResponseResponse {
+  data: IResReplyInform[],
+  status: number
+}
 
 export {
   IInformReq,
   IReqBoardInform,
   IReqReplyInform,
   IResReplyInform,
-  IResInform
+  IResInform,
+  IBoardResponse,
+  IResBoardInform,
+  IResponseResponse
 } ;
