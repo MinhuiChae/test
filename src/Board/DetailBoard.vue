@@ -32,32 +32,17 @@
     </table>
 
 <!--댓글-->
-  <div class="reply">
-    <p class="replyCnt">댓글 ({{ state.replyList.length }})</p>
-    <p class="replyButton">
-      <button @click.stop="onChangeReplyButtonStatus" v-if="isValidUser()">댓글쓰기</button>
-    </p>
-  </div>
-  
-  <div class="replyDivBox">
-    <div v-if="state.isClickReplyButton">
-      <p> 작성자: {{ state.userId }}</p>
-      <div class="writeReplyBox">
-        <input type="text" class="writeReplyInputBox" :value="state.Data.content" id="replyContent">
-        <button class="writeReplyButton" @click.stop="onPostReplyInform">확인</button>
-      </div>
-    </div>
-
-    <reply-content
-      :data = "state.Data"
-      :replyList = "state.replyList"
-      :userId = "state.userId"
-      @reply = "doUpdate"
-      @replySeq = "setReplySeq"
-      @updateReplySeq = "setUpdateReplySeq"
-      @deleteSeq = "doDeleteReply"
-    ></reply-content>
-  </div>
+  <reply-content
+    :data = "state.Data"
+    :replyList = "state.replyList"
+    :userId = "state.userId"
+    @reply = "doUpdate"
+    @updateReplySeq = "setUpdateReplySeq"
+    @replySeq = "setReplySeq"
+    @deleteReplySeq = "doDelete"
+    @postReply = "setPostReply"
+  ></reply-content>
+  <!-- </div> -->
 </template>
 
 <script lang="ts">
@@ -98,29 +83,24 @@ export default defineComponent({
       Data: replyData as IResReplyInform,
       pageNo: 0,
       isVisitedDetailVue: true,
-      isClickReplyButton: false,
+      updateReplySeq: 0,
       replySeq:0,
-      updateReplySeq:0,
       isReplyWriter: false,
       sortBy: '',
       sortDir: ''
     });
 
+    const setUpdateReplySeq = (updateReplySeq: number) => {
+      state.updateReplySeq = updateReplySeq;
+    }
+
     const setReplySeq = (replySeq: number) => {
       state.replySeq = replySeq;
     }
 
-    const setUpdateReplySeq = (updateReplySeq: number) => {
-      state.updateReplySeq = updateReplySeq;
-      console.log(state.updateReplySeq)
-    }
-
-    const onChangeReplyButtonStatus = () => {
-      state.isClickReplyButton = !state.isClickReplyButton;
-    }
-
-    const isValidUser = (): boolean => {
-      return state.userId !== 0
+    const setPostReply = (reply: string) => {
+      state.Data.content = reply;
+      postReply();
     }
 
     const getBoard = () => {
@@ -169,7 +149,6 @@ export default defineComponent({
     }
 
     const changePostReplyInform = () => {
-      state.isClickReplyButton = false;
       state.Data.content='';
     }
 
@@ -211,27 +190,9 @@ export default defineComponent({
         console.error(err);
       }
     }
-    
-    
-    const onPostReplyInform = () => {
-      const replyContent = (document.getElementById("replyContent") as HTMLInputElement).value;
-      if(!replyContent) {
-        alert('댓글에 값이없습니다')
-      } else {
-        doPost(replyContent);
-      }
-    }
 
-    const doPost = (reply: string) => {
-      if(state.isClickReplyButton) {
-        state.Data.content = reply;
-        postReply();
-      } 
-    }
-
-    const doDeleteReply = (deleteSeq: number) => {
-      state.replySeq = deleteSeq;
-      console.log(state.replySeq)
+    const doDelete = (replySeq: number) => {
+      state.replySeq = replySeq;
       deleteReply();
     }
     
@@ -278,16 +239,14 @@ export default defineComponent({
       state,
       onDeleteBoard,
       postReply,
-      onChangeReplyButtonStatus,
-      onPostReplyInform,
       onMovePageToList,
       onMovePageToHome,
       isBoardWriter,
-      isValidUser,
       doUpdate,
       setUpdateReplySeq,
-      doDeleteReply,
-      setReplySeq
+      setReplySeq,
+      doDelete,
+      setPostReply
     }
   }
 });
