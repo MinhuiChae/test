@@ -11,7 +11,6 @@ import ResponseMessage from "../common/responseMessage";
 const boardList: BoardResModel[] = [];
 const replyList: ReplyResModel[] = [];
 
-
 class BoardResponse {
   res: express.Response;
   constructor(res: express.Response) {

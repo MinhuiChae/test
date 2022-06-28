@@ -12,7 +12,17 @@ interface IUserInform {
   selectOption?: string[]
 }
 
-interface IBoardInputInform {
+interface IWriteInform {
+  seq: number,
+  isInputType: boolean,
+  listClass?: string,
+  title?: string,
+  inputClass?: string,
+  inputName?: string,
+  inputValue?: string
+}
+
+interface IcolumnInform {
   name: string,
   title: string,
   class: string
@@ -81,8 +91,9 @@ export {
   IReqBoardInform,
   IReqReplyInform,
   IResBoardInform,
-  IBoardInputInform,
+  IcolumnInform,
   IResReplyInform,
   EBoardSortType,
-  IResInform
+  IResInform,
+  IWriteInform
 }

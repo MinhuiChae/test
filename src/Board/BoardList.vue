@@ -6,23 +6,22 @@
       curPerPage: state.countPerPage,
       boardListLength: state.boardList.length,
       post: true,
-      isValidUser: state.isValidUser,
       userId: state.userId,
       sortBy: state.sortBy,
       sortDir: state.sortDir
     }}">
-    <button class="backToHomeButton">글쓰기</button>
+    <button class="backToHomeButton" v-if="canWriteBoard()">글쓰기</button>
     </router-link>
     </div>
     <div class = "container">
     <table class = "userListTable">
-      <th v-for="board in boardListTitle" :key ="board.name" :class="board.class" @click.stop="onSort(board.name)">
-        {{ board.title }} 
-        <p class="sorting" v-if="decideSortItem(board.name)">{{ getSortIcon }}</p>
+      <th v-for="column in columnList" :key ="column.name" :class="column.class" @click.stop="onSort(column.name)">
+        {{ column.title }} 
+        <p class="sorting" v-if="isPresentSortItem(column.name)">{{ getSortIcon }}</p>
       </th> 
       <tr v-for="board in state.boardList" :key ="board.bbsSeq" class = "dataList" @click.stop="onMoveDetailPage(board.bbsSeq)" >
         <td>{{ board.bbsSeq }}</td>
-        <td >{{ board.title }} ({{ board.replyCnt}})</td>
+        <td>{{ board.title }} ({{ board.replyCnt}}) </td>
         <td>{{ board.userId }}</td>
       </tr>
     </table>
@@ -40,34 +39,31 @@
 </template>
 
 <script lang="ts">
-import {reactive, defineComponent, onMounted, computed} from 'vue';
-import { IResBoardInform, IUserData, ESortDir, IBoardInputInform, IResReplyInform, IResInform} from "@/interface";
+import { reactive, defineComponent, onMounted, computed} from 'vue';
+import { IResBoardInform, IUserData, ESortDir, IcolumnInform, IResInform} from "@/interface";
 import axios from 'axios';
 import { useRoute } from 'vue-router';
 
-export { default as detailPage } from './DetailBoard.vue'; 
 export default defineComponent({
   name: 'Board-detail',
   setup() {
     const route = useRoute();
     const state = reactive({
       boardList: [] as IResBoardInform[],
-      userId: 3,
+      id: 2,
+      userId: 0,
       countPerPage: 5,
       pageNo: 1,
       sortBy: 'bbsSeq',
       sortDir: 'origin',
       totalPage: 1,
-      bbsSeq:0,
-      isVisitedDetailVue:false,
+      bbsSeq: 0,
+      isVisitedDetailVue: false,
       userList: [] as IUserData[],
-      isValidUser: false,
-      sortIcon: '(-)',
-      replyLength: [] as IResReplyInform[],
-      replyList: [] as IResReplyInform[]
+      sortIcon: '(-)'
     });
 
-    const boardListTitle : IBoardInputInform[] = [
+    const columnList : IcolumnInform[] = [
       {
         name: 'bbsSeq',
         title: 'No ',
@@ -75,7 +71,7 @@ export default defineComponent({
       },
       {
         name: 'title',
-        title: 'Title  ',
+        title: 'Title ',
         class: 'boardListTitle'
       },
       {
@@ -84,6 +80,10 @@ export default defineComponent({
         class: 'boardListUserId'
       }
     ]
+
+    const canWriteBoard = (): boolean => {
+      return state.userId !== 0
+    }
 
     const getBoardList = () => {
       try{        
@@ -96,8 +96,8 @@ export default defineComponent({
       }
     }
 
-    const decideSortItem = (sortBy: string): boolean => {
-      return state.sortBy === sortBy ? true : false;
+    const isPresentSortItem = (sortBy: string): boolean => {
+      return state.sortBy === sortBy;
     }
 
     const getSortIcon = computed(() => {
@@ -128,16 +128,11 @@ export default defineComponent({
     }
 
     const onSort = (sortBy: string) => {
-      if (state.sortBy === sortBy) {
-        changeSortDir();
-      } else {
-        initSortDir();
-      }
+      state.sortBy === sortBy ? changeSortDir() : initSortDir();
       state.sortBy = sortBy;
       getBoardList();
     }
 
-    // userList를 업데이트 하고 find하는 함수 호출
     const checkValidUser = () => {
       try{        
         const url = "/api/user";
@@ -154,9 +149,9 @@ export default defineComponent({
       state.userList = res.data.data as IUserData[];
     }
 
-    //userId가 회원인지 아닌지 체크 한 다음 boolean 값을 isValidUser에 넣어주는 함수
     const checkUserInUserList = () => {
-      state.isValidUser = state.userList.find((user)=> user.id === state.userId) === undefined ? false : true;
+      const userSeq = state.userList.findIndex((user) => user.id === state.id);
+      if(userSeq !== -1) state.userId = state.id;
     }
 
     const updateBoardList = (res: IResInform) => {
@@ -197,7 +192,7 @@ export default defineComponent({
     }
 
     const onMoveDetailPage = (bbsSeq: number) => {
-      window.location.href=`/detail/${bbsSeq}/${state.pageNo}/${state.userId}/${state.isValidUser}/${state.sortBy}/${state.sortDir}`;
+      window.location.href=`/detail/${bbsSeq}/${state.pageNo}/${state.userId}/${state.sortBy}/${state.sortDir}`;
     }
 
     const onMoveHomePage = () => {
@@ -215,13 +210,14 @@ export default defineComponent({
       onPlusPageNum,
       onMinusPageNum,
       onSort,
-      decideSortItem,
+      isPresentSortItem,
       canPrevPage,
       canNextPage,
-      boardListTitle,
+      columnList,
       onMoveDetailPage,
       onMoveHomePage,
       getSortIcon,
+      canWriteBoard
     }
   }
 })

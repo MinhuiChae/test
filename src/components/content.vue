@@ -73,7 +73,6 @@ export default defineComponent({
     
     const changeUserInform = () => {
       const elements = el.value?.elements;
-      console.log("elements", elements)
       if (elements) {
         [...elements].forEach(element => {
           const key = element.getAttribute("name");

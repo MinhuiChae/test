@@ -2,7 +2,7 @@ import {createWebHistory, createRouter} from 'vue-router';
 
 const routes = [
   {
-    path:'/detail/:bbsSeq/:pageNo/:userId/:isValidUser/:sortBy/:sortDir',
+    path:'/detail/:bbsSeq/:pageNo/:userId/:sortBy/:sortDir',
     name:"Detail",
     component: () => import('./Board/DetailBoard.vue'),
     props: true

@@ -12,7 +12,6 @@
       bbsSeq: state.bbsSeq,
       update: true,
       userId: state.userId,
-      isValidUser: state.isValidUser,
       sortBy: state.sortBy,
       sortDir: state.sortDir
     }}">
@@ -36,7 +35,7 @@
   <div class="reply">
     <p class="replyCnt">댓글 ({{ state.replyList.length }})</p>
     <p class="replyButton">
-      <button @click.stop="onChangeReplyButtonStatus">댓글쓰기</button>
+      <button @click.stop="onChangeReplyButtonStatus" v-if="isValidUser()">댓글쓰기</button>
     </p>
   </div>
   
@@ -52,12 +51,12 @@
     <div v-for="reply in state.replyList" :key="reply.replySeq">
       <p class="replyUserId"> 작성자: {{ reply.userId }}</p>
       <p class="replyBtnC">
-        <button class="replyUpdate" @click.stop="onSetUpdateReplyInform(reply.replySeq)" v-if="state.updateSeq !== reply.replySeq && isReplyWriter(reply.userId)">수정</button>
-        <button class="replyUpdate" @click.stop="onUpdateReplyInform()" v-if="state.updateSeq === reply.replySeq && isReplyWriter(reply.userId)">확인</button>
+        <button class="replyUpdate" @click.stop="onSetUpdateReplyInform(reply.replySeq)" v-if="state.updateReplySeq !== reply.replySeq && isReplyWriter(reply.userId)">수정</button>
+        <button class="replyUpdate" @click.stop="onUpdateReplyInform()" v-if="state.updateReplySeq === reply.replySeq && isReplyWriter(reply.userId)">확인</button>
         <button class="replyDelete" @click.stop="onDeleteReplyInform(reply.replySeq)" v-if="isReplyWriter(reply.userId)">삭제</button>
       </p>
-      <input type="text" class="replyContent" :value="reply.content" readonly v-if="state.updateSeq !== reply.replySeq">
-      <input type="text" class="replyContent" :value="reply.content" id="replyUpdateContent" v-if="state.updateSeq === reply.replySeq">
+      <input type="text" class="replyContent" :value="reply.content" readonly v-if="state.updateReplySeq !== reply.replySeq">
+      <input type="text" class="replyContent" :value="reply.content" id="replyUpdateContent" v-if="state.updateReplySeq === reply.replySeq">
     </div>
   </div>
 </template>
@@ -97,16 +96,19 @@ export default defineComponent({
       pageNo: 0,
       isVisitedDetailVue: true,
       isClickReplyButton: false,
-      updateSeq: 0,
+      updateReplySeq: 0,
       replySeq:0,
-      isValidUser: '',
       isReplyWriter: false,
       sortBy: '',
       sortDir: ''
-    })
+    });
 
     const onChangeReplyButtonStatus = () => {
       state.isClickReplyButton = !state.isClickReplyButton;
+    }
+
+    const isValidUser = (): boolean => {
+      return state.userId !== 0
     }
 
     const getBoard = () => {
@@ -144,12 +146,11 @@ export default defineComponent({
       window.location.href = "/" + state.sortBy + "/" + state.sortDir
     };
 
-    const getReplyList = () => {
+    const getReplyList = async () => {
       try{        
         const url = "/api/board/" + state.bbsSeq + "/reply";
-        axios.get(url).then((res: any) => {
-          updateReplyList(res.data);
-        }); 
+        const res = await axios.get(url);
+        if (res) updateReplyList(res.data);
       } catch(err) {
         console.error(err);
       }
@@ -161,10 +162,10 @@ export default defineComponent({
     }
 
     const changeUpdateReplyInform = () => {
-      state.updateSeq = 0;
+      state.updateReplySeq = 0;
       state.Data.content = '';
     }
-
+    
     const postReply = () => {
       try{        
         const url = "/api/board/" + state.bbsSeq + "/reply/" + state.userId;
@@ -196,34 +197,30 @@ export default defineComponent({
     }
 
     const onSetUpdateReplyInform = (replynum: number) => {
-      state.updateSeq = replynum;
+      state.updateReplySeq = replynum;
       state.replySeq = replynum;
     }
-
+    
     const onPostReplyInform = () => {
-      const replyValue = (document.getElementById("replyContent") as HTMLInputElement).value;
-      if(isValidReplyForm(replyValue)) {
-        if(isValidUser()) {
-          doPost(replyValue);
-        } else {
-          alert("회원이 아닙니다.")
-        }
-      } 
+      const replyContent = (document.getElementById("replyContent") as HTMLInputElement).value;
+      if(!replyContent) {
+        alert('댓글에 값이없습니다')
+      } else {
+        doPost(replyContent);
+      }
     }
 
     const onUpdateReplyInform = () => {
-      const replyUpdateValue = (document.getElementById("replyUpdateContent") as HTMLInputElement).value;
-      if(isValidReplyForm(replyUpdateValue)) {
-        if(isValidUser()) {
-          doUpdate(replyUpdateValue);
-        } else {
-          alert("회원이 아닙니다.")
-        }
+      const replyUpdateContent = (document.getElementById("replyUpdateContent") as HTMLInputElement).value;
+      if(!replyUpdateContent) {
+        alert('댓글에 값이없습니다')
+      } else {
+        doUpdate(replyUpdateContent);
       }
     }
 
     const doUpdate = (reply: string) => {
-      if(state.updateSeq !== 0) {
+      if(state.updateReplySeq !== 0) {
         state.Data.content = reply;
         updateReply();
       }
@@ -235,23 +232,7 @@ export default defineComponent({
         postReply();
       } 
     }
-
-    /**
-     * 1.먼저 댓글이 있는지 체크
-     * 2.회원인지 체크
-     * 3.post, update에 넘겨주기
-     */
-    const isValidUser = ():boolean => {
-      return state.isValidUser === 'true'
-    }
-
-    const isValidReplyForm = (reply: string): boolean => {
-      if(!reply) {
-        alert("댓글을 입력하십시오");
-        return false;
-      } return true;
-    }
-
+    
     const deleteReply = () => {
       try{        
         const url = "/api/board/" + state.bbsSeq + "/reply/" + state.replySeq;
@@ -291,7 +272,6 @@ export default defineComponent({
       state.userId = Number(route.params.userId);
       state.sortBy = String(route.params.sortBy);
       state.sortDir = String(route.params.sortDir);
-      state.isValidUser = String(route.params.isValidUser);
     }
 
     onMounted(() => {
@@ -313,7 +293,8 @@ export default defineComponent({
       isReplyWriter,
       onMovePageToList,
       onMovePageToHome,
-      isBoardWriter
+      isBoardWriter,
+      isValidUser
     }
   }
 });

@@ -6,17 +6,9 @@
     <button class="backToHomeListButton" @click.stop = "onMovePageToHome" >리스트</button>
   </div>
     <form ref = 'el' class="boardDetailViews">
-      <ul>
-        <li class="Write">제목</li>
-      </ul>
-      <ul>
-        <li><input type="text" class="inputWriteTitle" name="title" :value="state.Data.title"></li>
-      </ul>
-      <ul>
-        <li class="Write">내용</li>
-      </ul>
-      <ul>
-        <li><input type="text" class="inputWriteContent" name="content" :value="state.Data.content"></li>
+      <ul v-for="inform in writeInformList" :key="inform.seq">
+        <li :class="inform.listClass" v-if="inform.isInputType === false">{{ inform.title }}</li>
+        <li><input type="text" :class="inform.inputClass" :name="inform.inputName" :value="inform.inputValue" v-if="inform.isInputType"></li>
       </ul>
     </form>
 </div>
@@ -26,14 +18,18 @@
 import {reactive, defineComponent, ref, onMounted} from 'vue';
 import useObject from '@/composition/useObject';
 import { THTMLElement } from '@/types';
-import { IReqBoardInform , IResBoardInform, IResInform} from "@/interface";
+import { IReqBoardInform , IResBoardInform, IResInform, IWriteInform } from "@/interface";
 import { useRoute } from 'vue-router';
 import axios from 'axios';
 export default defineComponent({
    //eslint-disable-next-line
   name: 'Write',
- 
-  setup() {
+  props: {
+    title: String,
+    content: String,
+    board: Object
+  },
+  setup(props) {
     const route = useRoute();
     const boardInform: IReqBoardInform = {
       title: '',
@@ -51,15 +47,42 @@ export default defineComponent({
       userId: 0,
       Data: boardInform as IReqBoardInform,
       resData: boardData as IResBoardInform,
-      totalPage: 0,
       bbsSeq:0,
       update: false,
       post: false,
       curPage:0,
-      isValidUser: '',
       sortBy: '',
       sortDir: '',
-    })
+    });
+
+    const writeInformList: IWriteInform[] = [
+      {
+        seq: 1,
+        isInputType: false,
+        listClass: 'Write',
+        title: '제목'
+      },
+      {
+        seq: 2,
+        isInputType: true,
+        inputClass: 'inputWriteTitle',
+        inputName: 'title',
+        inputValue: props.title
+      },
+      {
+        seq: 3,
+        isInputType: false,
+        listClass: 'Write',
+        title: '내용'
+      },
+      {
+        seq: 4,
+        isInputType: true,
+        inputClass: 'inputWriteContent',
+        inputName: 'content',
+        inputValue: props.content
+      }
+    ]
 
     const updateBoardDetail = (res: IResInform) => {
       state.resData = res.data as IResBoardInform;
@@ -102,39 +125,42 @@ export default defineComponent({
     }
 
     const moveToDetailPage = (page: number) => {
-      window.location.href=`/detail/${state.resData.bbsSeq}/${page}/${state.userId}/${state.isValidUser}/${state.sortBy}/${state.sortDir}`;
+      window.location.href=`/detail/${state.resData.bbsSeq}/${page}/${state.userId}/${state.sortBy}/${state.sortDir}`;
     }
 
     const el = ref<HTMLFormElement>();
-    const changeIBoardData: IReqBoardInform = Object.assign({}, state.Data);
+    const changeIBoardData: IReqBoardInform = boardInform;
     const { setProperty, getElementValue } = useObject();
     const checkFormList: string[] = [];
 
     const onChangeBoardInform = () => {
+      setNewDataAtBoard();
+
+      if(checkFormList.length !== 0) {
+        alert(checkFormList + '를 확인하세요');
+      } doWrite();
+
+      checkFormList.length = 0;
+    }
+
+    const setNewDataAtBoard = () => {
       const elements = el.value?.elements;
       if(elements) {
         [...elements].forEach(element => {
           const key = element.getAttribute("name");
           let value: string = getElementValue(element as THTMLElement);
-          if(key) checkValidInform(key, value);
+          if(key) {
+            if(!value) {
+              checkFormList.push(key);
+            } setProperty(changeIBoardData, key as keyof IReqBoardInform, value);
+          }
         })
       }
-
-      if(checkFormList.length === 0) {
-        state.Data = changeIBoardData;
-        if(state.post) {
-          state.isValidUser === 'true' ? postBoard() : alert("회원이 아닙니다.");
-        } else {
-          updateBoard();
-        }
-      } else {
-        alert(checkFormList + '를 확인하세요')
-      }
-      checkFormList.length = 0;
     }
 
-    const checkValidInform = (key: string, value: any) => {
-      !value === true ? checkFormList.push(key) : setProperty(changeIBoardData, key as keyof IReqBoardInform, value);
+    const doWrite = () => {
+      state.Data = changeIBoardData;
+      state.post === true? postBoard() : updateBoard();
     }
 
     const onMovePageToHome = () => {
@@ -148,11 +174,8 @@ export default defineComponent({
       state.userId = Number(route.params.userId);
       state.sortBy = String(route.params.sortBy);
       state.sortDir = String(route.params.sortDir);
-      state.isValidUser = String(route.params.isValidUser);
       if(state.update) {
         state.curPage = Number(route.params.pageNo);
-        state.Data.title = String(route.params.title);
-        state.Data.content = String(route.params.content);
       }
     }
 
@@ -165,7 +188,9 @@ export default defineComponent({
       el,
       onChangeBoardInform,
       updateBoard,
-      onMovePageToHome
+      onMovePageToHome,
+      writeInformList,
+      props
     }
   }
 })

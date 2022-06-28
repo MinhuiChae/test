@@ -1,4 +1,3 @@
-import { ESortType} from "../enum/index"
 
 interface IInformReq{
   id: number,
