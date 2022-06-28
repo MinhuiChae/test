@@ -50,7 +50,7 @@ export default defineComponent({
     const route = useRoute();
     const state = reactive({
       boardList: [] as IResBoardInform[],
-      id: 2,
+      id: 3,
       userId: 0,
       countPerPage: 5,
       pageNo: 1,

@@ -36,13 +36,11 @@
     :data = "state.Data"
     :replyList = "state.replyList"
     :userId = "state.userId"
-    @reply = "doUpdate"
-    @updateReplySeq = "setUpdateReplySeq"
-    @replySeq = "setReplySeq"
-    @deleteReplySeq = "doDelete"
-    @postReply = "setPostReply"
+    @updateReply = "doUpdateReply"
+    @replySeq = "setUpdateReplySeq"
+    @deleteReplySeq = "doDeleteReply"
+    @postReply = "doPostReply"
   ></reply-content>
-  <!-- </div> -->
 </template>
 
 <script lang="ts">
@@ -83,25 +81,10 @@ export default defineComponent({
       Data: replyData as IResReplyInform,
       pageNo: 0,
       isVisitedDetailVue: true,
-      updateReplySeq: 0,
       replySeq:0,
-      isReplyWriter: false,
       sortBy: '',
       sortDir: ''
     });
-
-    const setUpdateReplySeq = (updateReplySeq: number) => {
-      state.updateReplySeq = updateReplySeq;
-    }
-
-    const setReplySeq = (replySeq: number) => {
-      state.replySeq = replySeq;
-    }
-
-    const setPostReply = (reply: string) => {
-      state.Data.content = reply;
-      postReply();
-    }
 
     const getBoard = () => {
       try{        
@@ -148,12 +131,17 @@ export default defineComponent({
       }
     }
 
-    const changePostReplyInform = () => {
+    const initPostReplyInform = () => {
       state.Data.content='';
     }
 
-    const changeUpdateReplyInform = () => {
+    const initUpdateReplyInform = () => {
       state.Data.content = '';
+    }
+
+    const doPostReply = (reply: string) => {
+      state.Data.content = reply;
+      postReply();
     }
     
     const postReply = () => {
@@ -163,7 +151,7 @@ export default defineComponent({
           content: state.Data.content
         }).then((res: any) => {
           getReplyList();
-          changePostReplyInform();
+          initPostReplyInform();
           alert(res.data.msg);
         }); 
       } catch(err) {
@@ -171,7 +159,11 @@ export default defineComponent({
       }
     }
 
-    const doUpdate = (reply: string) => {
+    const setUpdateReplySeq = (replySeq: number) => {
+      state.replySeq = replySeq;
+    }
+
+    const doUpdateReply = (reply: string) => {
       state.Data.content = reply;
       updateReply();
     }
@@ -183,7 +175,7 @@ export default defineComponent({
           content: state.Data.content
         }).then((res: any) => {
           updateReplyList(res.data);
-          changeUpdateReplyInform();
+          initUpdateReplyInform();
           alert(res.data.msg);
         }); 
       } catch(err) {
@@ -191,7 +183,7 @@ export default defineComponent({
       }
     }
 
-    const doDelete = (replySeq: number) => {
+    const doDeleteReply = (replySeq: number) => {
       state.replySeq = replySeq;
       deleteReply();
     }
@@ -242,11 +234,10 @@ export default defineComponent({
       onMovePageToList,
       onMovePageToHome,
       isBoardWriter,
-      doUpdate,
+      doUpdateReply,
       setUpdateReplySeq,
-      setReplySeq,
-      doDelete,
-      setPostReply
+      doDeleteReply,
+      doPostReply
     }
   }
 });

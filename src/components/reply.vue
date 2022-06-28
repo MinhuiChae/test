@@ -43,7 +43,6 @@ export default defineComponent({
   },
 
   setup(props, context) {
-
     const state = reactive({
       updateReplySeq: 0,
       replySeq:0,
@@ -53,7 +52,6 @@ export default defineComponent({
     const onSetUpdateReplyInform = (replynum: number) => {
       state.updateReplySeq = replynum;
       state.replySeq = replynum;
-      context.emit("updateReplySeq", state.updateReplySeq);
       context.emit("replySeq", state.replySeq);
     }
 
@@ -66,29 +64,28 @@ export default defineComponent({
       if(!replyUpdateContent) {
         alert('댓글에 값이없습니다')
       } else {
-        doUpdate(replyUpdateContent);
-        state.updateReplySeq = 0;
+        emitUpdateReply(replyUpdateContent);
+        initUpdateReplySeq();
       }
     }
 
-    const isValidUser = (): boolean => {
-      return props.userId !== 0
-    }
-
-    const doUpdate = (reply: string) => {
-      if(state.updateReplySeq !== 0 && props.data) {
-        context.emit("reply", reply);
+    const emitUpdateReply = (reply: string) => {
+      if(state.updateReplySeq !== 0) {
+        context.emit("updateReply", reply);
       }
     }
 
-    const isReplyWriter = (userId:number): boolean => {
-      return props.userId === userId;
+    const initUpdateReplySeq = () => {
+      state.updateReplySeq = 0;
     }
 
     const onDeleteReplyInform = (replySeq: number) => {
       state.replySeq = replySeq;
+      emitDeleteReplySeq(replySeq);
+    }
+
+    const emitDeleteReplySeq = (replySeq: number) => {
       context.emit("deleteReplySeq", replySeq);
-      
     }
 
     const onPostReplyInform = () => {
@@ -96,13 +93,25 @@ export default defineComponent({
       if(!replyContent) {
         alert('댓글에 값이없습니다')
       } else {
-        doPost(replyContent);
-        state.isClickReplyButton = false;
+        emitPostReply(replyContent);
+        initReplyButton();
       }
     }
 
-    const doPost = (reply: string) => {
+    const emitPostReply = (reply: string) => {
       context.emit("postReply", reply);
+    }
+
+    const initReplyButton = () => {
+      state.isClickReplyButton = false;
+    }
+
+    const isValidUser = (): boolean => {
+      return props.userId !== 0
+    }
+
+    const isReplyWriter = (userId:number): boolean => {
+      return props.userId === userId;
     }
 
     return {
