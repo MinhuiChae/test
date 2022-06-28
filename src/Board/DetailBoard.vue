@@ -47,29 +47,32 @@
         <button class="writeReplyButton" @click.stop="onPostReplyInform">확인</button>
       </div>
     </div>
-    
-    <div v-for="reply in state.replyList" :key="reply.replySeq">
-      <p class="replyUserId"> 작성자: {{ reply.userId }}</p>
-      <p class="replyBtnC">
-        <button class="replyUpdate" @click.stop="onSetUpdateReplyInform(reply.replySeq)" v-if="state.updateReplySeq !== reply.replySeq && isReplyWriter(reply.userId)">수정</button>
-        <button class="replyUpdate" @click.stop="onUpdateReplyInform()" v-if="state.updateReplySeq === reply.replySeq && isReplyWriter(reply.userId)">확인</button>
-        <button class="replyDelete" @click.stop="onDeleteReplyInform(reply.replySeq)" v-if="isReplyWriter(reply.userId)">삭제</button>
-      </p>
-      <input type="text" class="replyContent" :value="reply.content" readonly v-if="state.updateReplySeq !== reply.replySeq">
-      <input type="text" class="replyContent" :value="reply.content" id="replyUpdateContent" v-if="state.updateReplySeq === reply.replySeq">
-    </div>
+
+    <reply-content
+      :data = "state.Data"
+      :replyList = "state.replyList"
+      :userId = "state.userId"
+      @reply = "doUpdate"
+      @replySeq = "setReplySeq"
+      @updateReplySeq = "setUpdateReplySeq"
+      @deleteSeq = "doDeleteReply"
+    ></reply-content>
   </div>
 </template>
 
 <script lang="ts">
 import {reactive, defineComponent, onMounted} from 'vue';
 import axios from 'axios';
+import replyContent from '../components/reply.vue';
 import { IResBoardInform, IResReplyInform, IResInform } from '@/interface';
 import { useRoute } from 'vue-router';
 export default defineComponent({
   name:"Detail-view",
   props: {
     pageNo: Number
+  },
+  components: {
+    replyContent
   },
   setup(props) {
     const route = useRoute();
@@ -96,12 +99,21 @@ export default defineComponent({
       pageNo: 0,
       isVisitedDetailVue: true,
       isClickReplyButton: false,
-      updateReplySeq: 0,
       replySeq:0,
+      updateReplySeq:0,
       isReplyWriter: false,
       sortBy: '',
       sortDir: ''
     });
+
+    const setReplySeq = (replySeq: number) => {
+      state.replySeq = replySeq;
+    }
+
+    const setUpdateReplySeq = (updateReplySeq: number) => {
+      state.updateReplySeq = updateReplySeq;
+      console.log(state.updateReplySeq)
+    }
 
     const onChangeReplyButtonStatus = () => {
       state.isClickReplyButton = !state.isClickReplyButton;
@@ -162,7 +174,6 @@ export default defineComponent({
     }
 
     const changeUpdateReplyInform = () => {
-      state.updateReplySeq = 0;
       state.Data.content = '';
     }
     
@@ -181,6 +192,11 @@ export default defineComponent({
       }
     }
 
+    const doUpdate = (reply: string) => {
+      state.Data.content = reply;
+      updateReply();
+    }
+
     const updateReply = () => {
       try{        
         const url = "/api/board/" + state.bbsSeq + "/reply/" + state.replySeq;
@@ -195,11 +211,7 @@ export default defineComponent({
         console.error(err);
       }
     }
-
-    const onSetUpdateReplyInform = (replynum: number) => {
-      state.updateReplySeq = replynum;
-      state.replySeq = replynum;
-    }
+    
     
     const onPostReplyInform = () => {
       const replyContent = (document.getElementById("replyContent") as HTMLInputElement).value;
@@ -210,27 +222,17 @@ export default defineComponent({
       }
     }
 
-    const onUpdateReplyInform = () => {
-      const replyUpdateContent = (document.getElementById("replyUpdateContent") as HTMLInputElement).value;
-      if(!replyUpdateContent) {
-        alert('댓글에 값이없습니다')
-      } else {
-        doUpdate(replyUpdateContent);
-      }
-    }
-
-    const doUpdate = (reply: string) => {
-      if(state.updateReplySeq !== 0) {
-        state.Data.content = reply;
-        updateReply();
-      }
-    }
-
     const doPost = (reply: string) => {
       if(state.isClickReplyButton) {
         state.Data.content = reply;
         postReply();
       } 
+    }
+
+    const doDeleteReply = (deleteSeq: number) => {
+      state.replySeq = deleteSeq;
+      console.log(state.replySeq)
+      deleteReply();
     }
     
     const deleteReply = () => {
@@ -245,17 +247,8 @@ export default defineComponent({
       }
     }
 
-    const onDeleteReplyInform = (replySeq: number) => {
-      state.replySeq = replySeq;
-      deleteReply()
-    }
-
     const isBoardWriter = (): boolean => {
       return state.board.userId === state.userId;
-    }
-
-    const isReplyWriter = (userId:number): boolean => {
-      return state.userId === userId;
     }
 
     const onMovePageToList = (pageNo: number, isVisitedDetailVue:boolean) => {
@@ -287,14 +280,14 @@ export default defineComponent({
       postReply,
       onChangeReplyButtonStatus,
       onPostReplyInform,
-      onUpdateReplyInform,
-      onSetUpdateReplyInform,
-      onDeleteReplyInform,
-      isReplyWriter,
       onMovePageToList,
       onMovePageToHome,
       isBoardWriter,
-      isValidUser
+      isValidUser,
+      doUpdate,
+      setUpdateReplySeq,
+      doDeleteReply,
+      setReplySeq
     }
   }
 });
