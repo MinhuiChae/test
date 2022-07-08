@@ -1,3 +1,5 @@
+import { setTransitionHooks } from "vue";
+
 class drawCanvas {
   canvas: HTMLCanvasElement | undefined;
   context: CanvasRenderingContext2D | undefined = undefined;
@@ -7,6 +9,8 @@ class drawCanvas {
   shortPositionY: number = 20;
   longPositionY: number = 30;
   videoFrame: number = 23.976;
+  minRuleWidth: number = 0;
+  isInit: boolean = false;
 
   constructor(canvas: HTMLCanvasElement | undefined, context: CanvasRenderingContext2D) {
     this.canvas = canvas;
@@ -49,27 +53,54 @@ class drawCanvas {
     }
   }
 
+  calculateRuleFrame(start: number, end: number) {
+   
+    const duration = end - start;
+    const canvas = this.canvas;
+    console.error("calculateRuleFrame : duration ", duration)
+    if (canvas) {
+    
+      //표현하는 단위 ruleFrame 
+      // 표현단위가 너무 작아서 
+      // 5000 개 5000개 방법 
+      // 9개 방법으로 
+      // 1.... 2...... 4 .... 8...  16...
+
+      for(let ruleFrame = 1; ruleFrame < duration; ruleFrame*=2) {
+        const ruleCnt = duration / ruleFrame;
+        const pixel = canvas.width / ruleCnt;
+        console.log("pixel > ", pixel);
+        if(pixel >= 5 && pixel <= 10) {
+          console.log("pixel> ", pixel)
+          console.log("ruleFrame> ", ruleFrame)
+          this.ruleFrame = ruleFrame;
+          this.ruleWidth = pixel;
+          break;
+        }
+      }
+    }
+  }
+
+  /**
+   * 최소 ruleWidth 값은?
+   * 
+   */
+
   draw(start: number, end: number): void {
     const context = this.context;
     const canvas = this.canvas;
     const duration = end - start;
+  
     if (context && canvas) {
-
-    for(let ruleFrame = 1; ruleFrame < duration; ruleFrame++) {
-      const ruleCnt = duration / ruleFrame;
-      const pixel = canvas.width / ruleCnt;
-
-      if(pixel >= 5 && pixel <= 10) {
-        this.ruleFrame = ruleFrame;
-      }
-    }
-
-    const ruleWidth = canvas.width / duration * this.ruleFrame ;
-
+    this.calculateRuleFrame(start, end)
+    const ruleWidth = canvas.width / duration * this.ruleFrame;
     this.ruleWidth = ruleWidth;
+    this.minRuleWidth = canvas.width / duration;
     const ruleCnt = canvas.width / ruleWidth;
+    context.lineWidth = 0.5;
 
-      context.lineWidth = 0.5;
+    console.log("ruleFrame", this.ruleFrame);
+    console.log("ruleWidth", ruleWidth);
 
       for(let cnt = 0; cnt <= ruleCnt; cnt++) {
         const rulePositionX = ruleWidth * cnt; 

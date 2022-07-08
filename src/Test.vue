@@ -1,7 +1,8 @@
 <template>
   <div class="container">
-    <button @click="enlargeTimeLine()">확대</button>
-    <video class="video" src="gdragon.mp4" ref="videoEl" controls ></video>
+    <button @click="onEnlargeTimeLine()" v-if="state.canEnlargeTimeLine">확대</button>
+    <button @click="onReductionTimeLine()" v-if="state.canReductionTimeLine">축소</button>
+    <video class="video" src="gdragon.mp4" ref="videoEl" controls></video>
     {{ state.currentFrame }}
     <div class="frameBox">
       <div class="frameTimeline" v-bind:style="{left:(state.currentPixel) + 'px'}"></div>
@@ -30,34 +31,73 @@ export default defineComponent({
       startVideoFrame: 0,
       myVideoDuration: 0,
       startPixel: 0,
-      endVideoFrame: 0
+      canEnlargeTimeLine: true,
+      canReductionTimeLine: false,
+      maxRuleFrame: 0,
+      ruleWidth: 0,
+      maxRuleWidth: 0,
+      minRuleWidth: 0
     })
+
+    const decideMaxRuleInfo = () => {
+      canvasClass.value?.calculateRuleFrame(0, state.videoDuration);
+      state.maxRuleFrame = state.ruleFrame;
+      state.maxRuleWidth = state.ruleWidth;
+    }
 
     const draw = () => {
       const start = state.startVideoFrame;
-      state.endVideoFrame = Math.ceil(state.videoDuration * state.videoFrame);
-      const end = state.endVideoFrame;
+      const end = Math.ceil(state.videoDuration * state.videoFrame);
       state.myVideoDuration = (end - start) / state.videoFrame;
       drawCanvas(8, start, end);
     }
 
-    const enlargeTimeLine = () => {
+    const drawWithChangeInfo = (num: number) => {
+      state.videoDuration = state.videoDuration * num
+      console.log('state.videoDuration:', state.videoDuration);
+
+      draw();
+      decideCurrentTimeVideoInfo()
+    }
+
+    const onEnlargeTimeLine = () => {
+      state.canReductionTimeLine = true;
       const canvas = canvasEl.value;
       if(canvas)
       state.canvasCtx.clearRect(0, 0, canvas?.width, canvas?.height)
-      state.startVideoFrame += 50;
-      state.endVideoFrame -= 50;
-      state.myVideoDuration = (state.endVideoFrame - state.startVideoFrame) / state.videoFrame;
-      drawCanvas(8, state.startVideoFrame, state.endVideoFrame);
-      videoCurrentTime()
+
+      drawWithChangeInfo(0.8);
+
+      if(canvasClass.value) {
+        if(state.ruleFrame > 1) {
+          state.canEnlargeTimeLine = true;
+        } else if(state.ruleFrame === 1){
+          state.canEnlargeTimeLine = false;
+        } 
+      }
     }
 
-    const videoCurrentTime = () => {
+    const onReductionTimeLine = () => {
+      state.canEnlargeTimeLine = true;
+      const canvas = canvasEl.value;
+      if(canvas)
+      state.canvasCtx.clearRect(0, 0, canvas?.width, canvas?.height);
+      
+      drawWithChangeInfo(2);
+
+      if(state.ruleFrame === state.maxRuleFrame && state.ruleWidth === state.maxRuleWidth) {
+        state.canReductionTimeLine = false;
+      } else {
+        state.canReductionTimeLine = true;        
+      }
+    }
+
+
+    const decideCurrentTimeVideoInfo = () => {
       const video = videoEl.value;
       const canvas = canvasClass.value;
 
       if(video && canvas) {
-        video?.play();
         video.currentTime = state.startVideoFrame / state.videoFrame;
         const startFrame = Math.ceil(video?.currentTime * state.videoFrame);
         state.startPixel = canvas.getCurrentPixel(startFrame, state.myVideoDuration);
@@ -76,7 +116,8 @@ export default defineComponent({
         const duration = video?.duration ;
         state.videoDuration = duration;
         draw()
-        videoCurrentTime()
+        decideCurrentTimeVideoInfo()
+        decideMaxRuleInfo();
       });
     }
 
@@ -87,6 +128,8 @@ export default defineComponent({
         canvas.setRuleUnit(5);
         canvas.draw(start, end);
         state.ruleFrame = canvas.ruleFrame;
+        state.ruleWidth = canvas.ruleWidth;
+        state.minRuleWidth = canvas.minRuleWidth;
       }
     }
 
@@ -103,7 +146,8 @@ export default defineComponent({
       canvasEl,
       videoEl,
       state,
-      enlargeTimeLine
+      onEnlargeTimeLine,
+      onReductionTimeLine
     }
   }
 
